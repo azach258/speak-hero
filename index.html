@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>SpeakHero - 15分鐘每日表達刻意練習與5天階梯成長考核系統</title>
+  <link rel="canonical" href="https://azach258.github.io/speak-hero/index.html">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0B0F19">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SpeakHero">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <link rel="icon" type="image/png" href="assets/icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Confetti Celebration Canvas -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <div class="app-container">
+    
+    <!-- Top Header & Brand -->
+    <header class="top-header">
+      <div class="brand-area">
+        <span class="brand-logo">🔥</span>
+        <div>
+          <div class="brand-title">SpeakHero</div>
+          <div class="brand-subtitle">15分鐘每日表達刻意練習</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="open-settings-btn" class="icon-btn" title="設定" aria-label="設定">
+          ⚙️
+        </button>
+      </div>
+    </header>
+
+    <!-- Streak & 15-Minute Daily Tracker -->
+    <section class="streak-dashboard">
+      <div class="streak-card-row">
+        <div class="stat-box">
+          <div class="stat-icon">🔥</div>
+          <div>
+            <div class="stat-val"><span id="streak-count">1</span> 天</div>
+            <div class="stat-lbl">連續打卡天數</div>
+          </div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-icon gold">🎖️</div>
+          <div>
+            <div class="stat-val" id="current-level-badge" style="font-size: 15px;">L1 敢開口小白</div>
+            <div class="stat-lbl">當前表達段位</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 15-Minute Task Progress -->
+      <div class="daily-15m-box">
+        <div class="progress-header">
+          <span>⏱️ 今日 15 分鐘修煉進度</span>
+          <span id="daily-progress-percent">0 / 3 任務 (0%)</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div id="daily-progress-fill" class="progress-bar-fill"></div>
+        </div>
+        <div class="task-steps-pills">
+          <div id="step-pill-1" class="step-pill">1. 無稿提煉</div>
+          <div id="step-pill-2" class="step-pill">2. 雙重朗讀</div>
+          <div id="step-pill-3" class="step-pill">3. 耐力心流</div>
+        </div>
+
+        <!-- Obsidian & Telegram Sync Actions -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:12px;">
+          <button id="sync-obsidian-btn" class="btn-secondary" style="min-height:40px; font-size:12px; padding:0 8px; border-color:rgba(129, 140, 248, 0.4);">
+            <span>🧠 同步至 Obsidian 複盤</span>
+          </button>
+          <button id="send-tg-btn" class="btn-secondary" style="min-height:40px; font-size:12px; padding:0 8px; border-color:rgba(56, 189, 248, 0.4);">
+            <span>📱 推送 TG 手機戰報</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5-Day Milestone Exam Banner (Dynamic) -->
+    <div id="milestone-banner" class="milestone-banner" style="display: none;">
+      <div class="milestone-info">
+        <h4 class="ms-title-text">🏆 5 天里程碑小考核已解鎖！</h4>
+        <p>錄製 3 分鐘視頻，雙屏對比 Day 1 與進步幅度！</p>
+      </div>
+      <button id="open-milestone-btn" class="milestone-btn">進入考核 ✨</button>
+    </div>
+
+    <!-- Task Navigation Tabs -->
+    <nav class="task-tabs-nav">
+      <button class="tab-btn active" data-tab="task1">🎯 1. 無稿提煉 (60s)</button>
+      <button class="tab-btn" data-tab="task2">📖 2. 雙重朗讀 (300字)</button>
+      <button class="tab-btn" data-tab="task3">🌊 3. 耐力隨心講 (5m)</button>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+
+      <!-- ==========================================
+           PANEL 1: 30~60s Flash Summary
+           ========================================== -->
+      <div id="panel-task1" class="task-panel active">
+        <div class="task-header-card">
+          <span class="task-badge">任務 1 · 快速組織語言</span>
+          <h2 class="task-title">30~60 秒無稿快練</h2>
+          <p class="task-desc">請無稿總結今天或昨天遇到的<strong>一件事</strong>、或學到的<strong>一個新觀點/知識</strong>。結論先行，滿 30 秒即可完成！</p>
+        </div>
+
+        <!-- Interactive Studio Area (Hides when report is ready) -->
+        <div id="t1-studio-container">
+          <!-- Encouragement Banner -->
+          <div class="encouragement-banner">
+            <span class="enc-icon">💖</span>
+            <div class="enc-text">
+              <strong>Just Do It！</strong> 不論好不好都沒關係、停頓結巴也完全正常！滿 30 秒即可點擊完成！
+            </div>
+          </div>
+
+          <!-- Camera Studio -->
+          <div id="t1-studio" class="camera-studio">
+            <video id="t1-video" class="camera-preview" autoplay playsinline muted style="display:none;"></video>
+            <div id="t1-placeholder" class="camera-idle-placeholder">
+              <span style="font-size:36px;">📸</span>
+              <p style="font-size:13px; color:#94A3B8;">鏡頭已休眠<br>點擊下方按鈕開始前鏡頭錄影</p>
+            </div>
+            <div id="t1-overlay" class="camera-overlay" style="display:none;">
+              <div id="t1-rec-indicator" class="rec-indicator">
+                <span class="rec-dot"></span> 錄製中
+              </div>
+              <div id="t1-timer" class="timer-pill">0s / 60s</div>
+            </div>
+            <canvas id="t1-visualizer" class="audio-visualizer-canvas"></canvas>
+          </div>
+
+          <!-- Controls -->
+          <div class="controls-bar">
+            <button id="t1-record-btn" class="btn-primary">
+              <span>🎯 開始 30~60s 無稿提煉</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- AI Feedback Output (Replaces studio area for single-screen view) -->
+        <div id="t1-feedback" style="display: none;"></div>
+      </div>
+
+      <!-- ==========================================
+           PANEL 2: 300-Word Dual-Pass Reading
+           ========================================== -->
+      <div id="panel-task2" class="task-panel">
+        <div class="task-header-card">
+          <span class="task-badge">任務 2 · 咬字重音肌肉記憶</span>
+          <h2 class="task-title">300 字雙重朗讀法</h2>
+          <p class="task-desc">大聲朗讀 2 遍：第 1 遍無提示摸索節奏，第 2 遍看紅色粗體重音強化力量感！</p>
+        </div>
+
+        <div class="reading-container">
+          <div class="reading-pass-badge">
+            <span id="t2-pass-tag" class="pass-tag pass1">第 1 遍：純文字盲讀</span>
+            <button id="t2-switch-article-btn" class="btn-secondary" style="min-height:36px; padding:0 12px; font-size:12px;">
+              🔄 換一篇
+            </button>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <h3 id="t2-art-title" style="font-size:16px; font-weight:800; color:#F8FAFC;">複利思維</h3>
+            <span id="t2-art-category" style="font-size:11px; color:#94A3B8; background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:4px;">認知成長</span>
+          </div>
+
+          <p id="t2-pass-desc" style="font-size:12px; color:#FDE68A; margin-bottom:12px; font-weight:600;">
+            請大聲朗讀一遍，自行摸索說話節奏與語氣頓挫。
+          </p>
+
+          <div id="t2-art-content" class="article-content">
+            載入文章中...
+          </div>
+        </div>
+
+        <div class="controls-bar">
+          <button id="t2-pass-action-btn" class="btn-primary">
+            <span>✅ 完成第 1 遍 ➔ 進入第 2 遍重音練習</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           PANEL 3: 3~5min Endurance Flow
+           ========================================== -->
+      <div id="panel-task3" class="task-panel">
+        <div class="task-header-card">
+          <span class="task-badge">任務 3 · 克服恐懼心流耐力</span>
+          <h2 class="task-title">3~5 分鐘耐力隨心講</h2>
+          <p class="task-desc">隨便講什麼都好！想到什麼講什麼，核心目標是<strong>不間斷講滿 3~5 分鐘</strong>，滿 3 分鐘即可完成！</p>
+        </div>
+
+        <div id="t3-studio-container">
+          <!-- Camera Studio with Dynamic Cheering Box -->
+          <div id="t3-studio" class="camera-studio">
+            <video id="t3-video" class="camera-preview" autoplay playsinline muted style="display:none;"></video>
+            <div id="t3-placeholder" class="camera-idle-placeholder">
+              <span style="font-size:36px;">🌊</span>
+              <p style="font-size:13px; color:#94A3B8;">鏡頭已休眠<br>點擊下方按鈕開始耐力隨心講</p>
+            </div>
+            <div id="t3-overlay" class="camera-overlay" style="display:none;">
+              <div id="t3-rec-indicator" class="rec-indicator">
+                <span class="rec-dot"></span> 耐力心流中
+              </div>
+              <div id="t3-timer" class="timer-pill">0:00 / 5:00</div>
+            </div>
+            
+            <!-- Floating Cheering Toast -->
+            <div id="t3-cheer-toast" class="cheering-toast">
+              💖 隨便講什麼都好，停頓了深呼吸繼續講！
+            </div>
+
+            <canvas id="t3-visualizer" class="audio-visualizer-canvas"></canvas>
+          </div>
+
+          <div class="controls-bar">
+            <button id="t3-record-btn" class="btn-primary">
+              <span>🌊 開始 3~5 分鐘耐力隨心講</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="t3-feedback" style="display: none;"></div>
+      </div>
+
+    </main>
+
+    <!-- ==========================================
+         5-DAY MILESTONE EXAM MODAL
+         ========================================== -->
+    <div id="milestone-modal" class="modal-overlay">
+      <div class="modal-container">
+        <div class="modal-header">
+          <div class="modal-title">🏆 5 天里程碑小考核</div>
+          <button id="close-milestone-btn" class="close-btn">&times;</button>
+        </div>
+
+        <!-- Studio Area -->
+        <div id="ms-studio-area">
+          <p style="font-size:13px; color:#C7D2FE; margin-bottom:12px;">
+            請錄製一段 <strong>3 分鐘</strong> 的主題表達（例如：回顧過去 5 天你的最大收穫）。完成後系統將自動調出 Day 1 影片進行<strong>雙屏前後對比</strong>！
+          </p>
+
+          <div class="camera-studio" style="max-height: 280px;">
+            <video id="ms-video" class="camera-preview" autoplay playsinline muted></video>
+            <div class="camera-overlay">
+              <div id="ms-rec-indicator" class="rec-indicator">
+                <span class="rec-dot"></span> 考核錄製中
+              </div>
+              <div id="ms-timer" class="timer-pill">0:00 / 3:00</div>
+            </div>
+          </div>
+
+          <button id="ms-record-btn" class="btn-primary" style="width:100%; margin-top:12px;">
+            <span>🎬 開始 3 分鐘里程碑考核錄製</span>
+          </button>
+        </div>
+
+        <!-- Report & Dual Comparison Area (Hidden initially) -->
+        <div id="ms-report-area" style="display: none;">
+          <h3 id="ms-badge-title" style="color:#F59E0B; text-align:center; margin-bottom:12px; font-size:18px;">
+            🎖️ 5 天階梯蛻變・言之有物先鋒
+          </h3>
+
+          <!-- Dual Video Grid (Before vs After) -->
+          <div class="dual-video-grid">
+            <div class="video-compare-box">
+              <video id="ms-day1-video" controls playsinline></video>
+              <div class="video-tag before">Day 1 初始</div>
+            </div>
+            <div class="video-compare-box">
+              <video id="ms-day5-video" controls playsinline></video>
+              <div class="video-tag after">Day 5 蛻變</div>
+            </div>
+          </div>
+
+          <!-- Growth Metrics Grid -->
+          <div class="metrics-radar-grid" style="margin-top:12px;">
+            <div class="metric-item"><span>🗣️ 流暢度提升</span><span id="ms-fluency-growth" class="metric-val">+22%</span></div>
+            <div class="metric-item"><span>🚫 贅詞減少率</span><span id="ms-filler-reduction" class="metric-val" style="color:#EF4444;">-65%</span></div>
+            <div class="metric-item"><span>🎯 重音自信分</span><span id="ms-cadence-growth" class="metric-val">+28%</span></div>
+            <div class="metric-item"><span>👀 眼神氣場力</span><span id="ms-eye-score" class="metric-val">+19%</span></div>
+          </div>
+
+          <div style="background:rgba(255,255,255,0.04); padding:12px; border-radius:8px; font-size:12px; color:#CBD5E1; margin:12px 0;">
+            <strong>📊 5 天質變診斷：</strong>
+            <p id="ms-summary-text" style="margin-top:4px; line-height:1.5;"></p>
+          </div>
+
+          <!-- Certificate Preview & Download -->
+          <img id="ms-cert-img" class="cert-preview-img" alt="Milestone Certificate">
+          
+          <button id="ms-download-cert-btn" class="btn-primary btn-success" style="width:100%;">
+            <span>📥 下載 5 天成長榮譽證書 (PNG)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         SETTINGS MODAL
+         ========================================== -->
+    <div id="settings-modal" class="modal-overlay">
+      <div class="modal-container">
+        <div class="modal-header">
+          <div class="modal-title">⚙️ 偏好設定與測試</div>
+          <button id="close-settings-btn" class="close-btn">&times;</button>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Google Gemini API Key (可選直連)</label>
+          <input type="password" id="setting-gemini-key" class="form-input" placeholder="填入 API Key 直連多模態評估 (未填自動純本地擬真)">
+          <p style="font-size:11px; color:#64748B; margin-top:4px;">所有 Key 僅存於手機本地，100% 私密安全。</p>
+        </div>
+
+        <div class="form-group" style="display:flex; justify-content:space-between; align-items:center;">
+          <label class="form-label" style="margin:0;">音效回饋 (Web Audio)</label>
+          <input type="checkbox" id="setting-sound-toggle" checked style="width:20px; height:20px;">
+        </div>
+
+        <hr style="border:0; border-top:1px solid var(--border-subtle); margin:16px 0;">
+
+        <div class="form-group">
+          <label class="form-label">🧪 測試模式專用快速通道</label>
+          <button id="test-day5-btn" class="btn-secondary" style="width:100%; margin-bottom:8px;">
+            <span>🚀 模擬滿 5 天 (立即體驗雙屏前後對比考核)</span>
+          </button>
+          <button id="reset-today-btn" class="btn-secondary" style="width:100%; color:#EF4444;">
+            <span>🔄 重置今日任務進度</span>
+          </button>
+        </div>
+
+        <button id="save-settings-btn" class="btn-primary" style="width:100%; margin-top:12px;">
+          <span>💾 儲存設定</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((reg) => console.log('✅ PWA Service Worker Registered:', reg.scope))
+          .catch((err) => console.warn('⚠️ PWA Service Worker failed:', err));
+      });
+    }
+  </script>
+</body>
+</html>

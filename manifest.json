@@ -1,0 +1,25 @@
+{
+  "name": "SpeakHero - 15分鐘口語表達教練",
+  "short_name": "SpeakHero",
+  "description": "15分鐘每日表達刻意練習與5天階梯成長考核系統",
+  "start_url": "https://azach258.github.io/speak-hero/index.html",
+  "scope": "https://azach258.github.io/speak-hero/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B0F19",
+  "theme_color": "#0B0F19",
+  "icons": [
+    {
+      "src": "https://azach258.github.io/speak-hero/assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://azach258.github.io/speak-hero/assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
