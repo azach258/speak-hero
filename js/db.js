@@ -136,7 +136,7 @@ class StorageDB {
   static getSettings() {
     const defaultSettings = {
       geminiApiKey: '',
-      geminiModel: 'gemini-2.5-flash',
+      geminiModel: 'gemini-flash-latest',
       soundEnabled: true,
       autoVideoMirror: true,
       currentStreak: 1,
