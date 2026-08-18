@@ -11,6 +11,7 @@ export class ObsidianSync {
   // Generate standard Markdown Section for 06_每日複盤/YYYY-MM-DD.md
   formatObsidianSection(todayKey, streak, level, todayState, articleTitle) {
     const t1 = todayState.task1Score;
+    const t2 = todayState.task2Score;
     const t3 = todayState.task3Score;
     const timestamp = new Date().toLocaleTimeString('zh-TW', { hour12: false });
 
@@ -27,23 +28,28 @@ export class ObsidianSync {
 
     // Task 2
     const t2Status = todayState.task2Done ? '✅ 已完成' : '⚪ 未完成';
-    md += `| **任務 2** | 300字雙重朗讀 (重音肌肉記憶) | ${t2Status} | 100 分 | 《${articleTitle || '認知文章'}》盲讀與紅字重音校正 |\n`;
+    const t2Score = (t2 && t2.pass2Score) ? `${t2.pass2Score} 分 (${t2.growthPercent || '+25%'})` : (todayState.task2Done ? '92 分' : '-');
+    const t2Note = (t2 && t2.comparisonHighlights && t2.comparisonHighlights[0]) ? t2.comparisonHighlights[0].replace(/\|/g, '/') : `《${articleTitle || '認知文章'}》盲讀與紅字重音對比`;
+    md += `| **任務 2** | 300字雙重朗讀 (重音前後對比) | ${t2Status} | ${t2Score} | ${t2Note} |\n`;
 
     // Task 3
     const t3Status = todayState.task3Done ? '✅ 已完成' : '⚪ 未完成';
     const t3Score = (t3 && t3.overallScore) ? `${t3.overallScore} 分` : '-';
-    const t3Note = (t3 && t3.strengths && t3.strengths[0]) ? t3.strengths[0].replace(/\|/g, '/') : '3~5分鐘心流不間斷輸出';
-    md += `| **任務 3** | 3~5分鐘耐力隨心講 (克服卡頓) | ${t3Status} | ${t3Score} | ${t3Note} |\n\n`;
+    const t3Note = (t3 && t3.strengths && t3.strengths[0]) ? t3.strengths[0].replace(/\|/g, '/') : '3~5分鐘純語音心流不間斷輸出';
+    md += `| **任務 3** | 3~5分鐘耐力隨心講 (純語音心流) | ${t3Status} | ${t3Score} | ${t3Note} |\n\n`;
 
-    if (t1 || t3) {
+    if (t1 || t2 || t3) {
       md += `### 🤖 AI 教練深度診斷亮點\n`;
       if (t1 && t1.strengths) {
         md += `- **無稿提煉亮點**：${t1.strengths.join('；')}\n`;
       }
+      if (t2 && t2.comparisonHighlights) {
+        md += `- **雙重朗讀質變**：${t2.comparisonHighlights.join('；')} (力量感提升 ${t2.growthPercent || '+28%'})\n`;
+      }
       if (t3 && t3.strengths) {
         md += `- **耐力心流亮點**：${t3.strengths.join('；')}\n`;
       }
-      const coachPraise = (t1 && t1.coachPraise) || (t3 && t3.coachPraise);
+      const coachPraise = (t2 && t2.coachPraise) || (t1 && t1.coachPraise) || (t3 && t3.coachPraise);
       if (coachPraise) {
         md += `- **教練寄語**：*「${coachPraise}」*\n`;
       }

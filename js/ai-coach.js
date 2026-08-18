@@ -44,6 +44,19 @@ export class AICoach {
     return this.heuristicTask1(durationSec, transcript);
   }
 
+  // Evaluate Task 2: 300-Word Dual-Pass Reading Contrast (Pass 1 vs Pass 2)
+  async evaluateTask2DualPass(pass1Data, pass2Data, article) {
+    this.updateSettings();
+    if (this.settings.geminiApiKey) {
+      try {
+        return await this.callGeminiTask2DualPass(pass1Data, pass2Data, article);
+      } catch (err) {
+        console.warn('Gemini Task 2 API call failed, falling back to local engine:', err);
+      }
+    }
+    return this.heuristicTask2DualPass(pass1Data, pass2Data, article);
+  }
+
   // Evaluate Task 3: 3~5min Endurance Flow
   async evaluateTask3(durationSec, blob = null, transcript = '') {
     this.updateSettings();
@@ -234,6 +247,140 @@ Day 5 講述逐字稿：${day5Data.transcript || '完成 3 分鐘主題表達'}`
     const json = await res.json();
     const rawText = json.candidates[0].content.parts[0].text;
     return JSON.parse(rawText);
+  }
+
+  // Direct Gemini Dual-Pass Reading Comparison API Call
+  async callGeminiTask2DualPass(pass1Data, pass2Data, article) {
+    const apiKey = this.settings.geminiApiKey;
+    const model = this.settings.geminiModel || 'gemini-2.5-flash';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+    const prompt = `你是一位專業的「演說與語音重音刻意練習教練」。
+學員剛剛朗讀了文章《${article.title || '認知文章'}》。
+他進行了【雙重朗讀法】訓練：
+- 第 1 遍（Pass 1·盲讀）：無標記摸索節奏，容易平鋪直敘。
+- 第 2 遍（Pass 2·重音強化）：看紅色粗體重音進行刻意加重與力量強化。
+
+文章原文（含重音標註）：
+${article.markedText || article.plainText || ''}
+
+🚨【診斷核心任務】：
+1. 深入對比 Pass 1 與 Pass 2 的語速、頓挫停頓、咬字爆發力與自信氣場。
+2. 評估學員在第 2 遍是否成功在粗體關鍵字處加重語氣、擺脫機械唸經感。
+3. 計算第 2 遍相較於第 1 遍的力量感提升百分比（growthPercent，如 "+28%"）。
+4. 嚴格輸出純 JSON 格式：
+
+{
+  "pass1Score": 76,
+  "pass2Score": 92,
+  "growthPercent": "+28%",
+  "scores": {
+    "cadenceRhythm": 90,
+    "emphasisPower": 94,
+    "clarity": 88,
+    "confidence": 92
+  },
+  "comparisonHighlights": [
+    "【節奏對比】第 1 遍偏快直敘，第 2 遍頓挫分明、呼吸感顯著增強",
+    "【力量對比】第 2 遍在核心觀點處語氣堅定，展現了強大的說服力"
+  ],
+  "stressedWordsHit": [
+    "在關鍵詞處加重有力，層次感瞬間凸顯！"
+  ],
+  "improvement": "【明日朗讀微建議】句子轉換時可多留半拍停頓，力量感會更沈穩。",
+  "coachPraise": "第 2 遍重音朗讀的蛻變非常明顯！肌肉記憶正在形成！🔥"
+}`;
+
+    const parts = [];
+
+    // Attach Pass 1 Audio if available
+    if (pass1Data && pass1Data.blob) {
+      try {
+        const b64 = await blobToBase64(pass1Data.blob);
+        let mime = pass1Data.blob.type || 'audio/webm';
+        if (mime.includes(';')) mime = mime.split(';')[0];
+        parts.push({
+          inline_data: { mime_type: mime, data: b64 }
+        });
+      } catch (e) {
+        console.warn('Pass 1 blob conversion failed:', e);
+      }
+    }
+
+    // Attach Pass 2 Audio if available
+    if (pass2Data && pass2Data.blob) {
+      try {
+        const b64 = await blobToBase64(pass2Data.blob);
+        let mime = pass2Data.blob.type || 'audio/webm';
+        if (mime.includes(';')) mime = mime.split(';')[0];
+        parts.push({
+          inline_data: { mime_type: mime, data: b64 }
+        });
+      } catch (e) {
+        console.warn('Pass 2 blob conversion failed:', e);
+      }
+    }
+
+    const userContext = `【學員朗讀資訊】
+文章標題：《${article.title}》
+Pass 1（盲讀）時長：${pass1Data.duration || 45} 秒 ｜ 轉錄參考："${pass1Data.transcript || ''}"
+Pass 2（重音）時長：${pass2Data.duration || 52} 秒 ｜ 轉錄參考："${pass2Data.transcript || ''}"
+
+請詳細對比兩次朗讀音訊，給出精準客觀的質變診斷！`;
+
+    parts.push({ text: `${prompt}\n\n${userContext}` });
+
+    const payload = {
+      contents: [{ parts }],
+      generationConfig: {
+        temperature: 0.2,
+        responseMimeType: "application/json"
+      }
+    };
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) throw new Error(`Gemini Task 2 Dual Pass Error: ${res.statusText}`);
+    const json = await res.json();
+    const rawText = json.candidates[0].content.parts[0].text;
+    return JSON.parse(rawText);
+  }
+
+  // Heuristic Simulation for Task 2 Dual Pass (Offline / No Key Fallback)
+  heuristicTask2DualPass(pass1Data, pass2Data, article) {
+    const p1Dur = pass1Data?.duration || 40;
+    const p2Dur = pass2Data?.duration || 48;
+    
+    // Typically, deliberate emphasis reading takes 10-25% more time due to pauses & stress
+    const cadenceBonus = p2Dur >= p1Dur ? 8 : 4;
+    const p1Score = Math.min(85, 75 + Math.floor(p1Dur / 10));
+    const p2Score = Math.min(96, p1Score + 12 + cadenceBonus);
+    const growth = `+${Math.round(((p2Score - p1Score) / p1Score) * 100)}%`;
+
+    return {
+      pass1Score: p1Score,
+      pass2Score: p2Score,
+      growthPercent: growth,
+      scores: {
+        cadenceRhythm: Math.min(96, 85 + cadenceBonus),
+        emphasisPower: Math.min(98, 88 + cadenceBonus),
+        clarity: Math.min(95, 86 + Math.floor(cadenceBonus / 2)),
+        confidence: Math.min(96, 89 + cadenceBonus)
+      },
+      comparisonHighlights: [
+        `第 1 遍盲讀用時 ${p1Dur}s（摸索語調），第 2 遍用時 ${p2Dur}s（重音加重放慢），展現了極佳的節奏控制力！`,
+        "第 2 遍在關鍵字句處明顯提高了咬字清晰度與飽滿度，徹底擺脫了機械唸讀感！"
+      ],
+      stressedWordsHit: [
+        `在《${article.title || '短文'}》核心觀點處咬字沉穩有力，聲音具有穿透感！`
+      ],
+      improvement: "下次朗讀時，可以在段落轉換處刻意深吸一口氣並停頓 1 秒，讓聽眾更容易吸收核心觀點。",
+      coachPraise: `太棒了！第 2 遍朗讀的重音力量感提升了 ${growth}，聲音的自信與立體感完全展現出來了！🔥`
+    };
   }
 
   // Heuristic Simulation for Task 1 (Offline / No Key Fallback)

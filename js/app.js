@@ -23,8 +23,13 @@ class SpeakHeroApp {
 
     // Media Controllers
     this.t1Media = null;
+    this.t2Media = null;
     this.t3Media = null;
     this.msMedia = null;
+
+    // Task 2 Dual Pass Audio Cache
+    this.task2Pass1Result = null;
+    this.task2Pass2Result = null;
 
     // Cheering quotes for Task 3
     this.cheeringQuotes = [
@@ -48,6 +53,7 @@ class SpeakHeroApp {
     this.setupTask2();
     this.setupTask3();
     this.setupMilestoneExam();
+    this.setupDailyRewardModal();
     this.setupSettingsModal();
     this.setupSyncActions();
     this.updateDailyProgress();
@@ -123,8 +129,9 @@ class SpeakHeroApp {
     const targetPanel = document.getElementById(`panel-${tabId}`);
     if (targetPanel) targetPanel.classList.add('active');
 
-    // Always stop camera when switching tabs to protect privacy & battery
+    // Always stop camera & mic when switching tabs to protect privacy & battery
     if (this.t1Media) this.t1Media.stopPreview();
+    if (this.t2Media) this.t2Media.stopPreview();
     if (this.t3Media) this.t3Media.stopPreview();
   }
 
@@ -280,43 +287,56 @@ class SpeakHeroApp {
   // TASK 2: 300-Word Dual-Pass Reading Setup
   // ==========================================
   setupTask2() {
-    this.renderTask2Article();
-
+    const canvasEl = document.getElementById('t2-visualizer');
     const switchArticleBtn = document.getElementById('t2-switch-article-btn');
-    const passActionBtn = document.getElementById('t2-pass-action-btn');
+    const recordBtn = document.getElementById('t2-record-btn');
+    const audioBar = document.getElementById('t2-audio-bar');
+    const timerPill = document.getElementById('t2-timer');
+    const recLabel = document.getElementById('t2-rec-label');
+
+    this.t2Media = new MediaController(null, canvasEl);
+
+    this.t2Media.onTick = (elapsed, remaining, progress, thresholdReached) => {
+      if (timerPill) timerPill.textContent = `${elapsed}s`;
+    };
 
     if (switchArticleBtn) {
       switchArticleBtn.addEventListener('click', () => {
+        if (this.t2Media && this.t2Media.isRecording) return;
         this.currentArticle = getRandomArticle(this.currentArticle.id);
         this.task2Pass = 1;
+        this.task2Pass1Result = null;
+        this.task2Pass2Result = null;
         this.renderTask2Article();
         sound.playBeep(587.33, 'sine', 0.1, 0.1);
       });
     }
 
-    if (passActionBtn) {
-      passActionBtn.addEventListener('click', () => {
-        if (this.task2Pass === 1) {
-          // Finish Pass 1 -> Go to Pass 2 (Marked)
-          this.task2Pass = 2;
-          this.todayState.task2Step1Done = true;
-          Storage.saveTodayState(this.todayKey, this.todayState);
-          this.renderTask2Article();
-          sound.taskComplete();
-        } else if (!this.todayState.task2Done) {
-          // Finish Pass 2 -> Complete Task 2
-          this.todayState.task2Step2Done = true;
-          this.todayState.task2Done = true;
-          Storage.saveTodayState(this.todayKey, this.todayState);
-          this.renderTask2Article();
-          sound.taskComplete();
-          this.updateDailyProgress();
+    if (recordBtn) {
+      recordBtn.addEventListener('click', async () => {
+        if (!this.t2Media.isRecording) {
+          // Start Recording Current Pass
+          if (audioBar) audioBar.style.display = 'flex';
+          if (recLabel) recLabel.textContent = this.task2Pass === 1 ? '第 1 遍盲讀錄音中' : '第 2 遍重音錄音中';
+          if (timerPill) timerPill.textContent = '0s';
+
+          await this.runCountdown(recordBtn);
+          await this.t2Media.startRecording({ minSeconds: 5, maxSeconds: 120, withVideo: false });
+          
+          recordBtn.className = 'btn-primary recording';
+          if (this.task2Pass === 1) {
+            recordBtn.innerHTML = '<span>⏹️ 朗讀完畢，點擊完成第 1 遍 (進入第 2 遍)</span>';
+          } else {
+            recordBtn.innerHTML = '<span>⏹️ 朗讀完畢，點擊完成第 2 遍 (AI 對比分析)</span>';
+          }
         } else {
-          // If already done, clicking progresses to Task 3
-          this.switchTab('task3');
+          // Stop Recording Current Pass
+          await this.finishTask2Pass();
         }
       });
     }
+
+    this.renderTask2Article();
   }
 
   renderTask2Article() {
@@ -324,71 +344,245 @@ class SpeakHeroApp {
     const categoryEl = document.getElementById('t2-art-category');
     const contentEl = document.getElementById('t2-art-content');
     const passTagEl = document.getElementById('t2-pass-tag');
-    const passActionBtn = document.getElementById('t2-pass-action-btn');
     const passDescEl = document.getElementById('t2-pass-desc');
+    const recordBtn = document.getElementById('t2-record-btn');
+    const audioBar = document.getElementById('t2-audio-bar');
 
     if (titleEl) titleEl.textContent = this.currentArticle.title;
     if (categoryEl) categoryEl.textContent = this.currentArticle.category;
+    if (audioBar) audioBar.style.display = 'none';
 
     if (this.task2Pass === 1) {
       if (passTagEl) {
         passTagEl.className = 'pass-tag pass1';
         passTagEl.textContent = '第 1 遍：純文字盲讀';
       }
-      if (passDescEl) passDescEl.textContent = '請大聲朗讀一遍，自行摸索說話節奏與語氣頓挫。';
+      if (passDescEl) passDescEl.textContent = '請點擊下方按鈕開始錄音，大聲朗讀一遍，自行摸索說話節奏與語氣頓挫。';
       if (contentEl) contentEl.innerHTML = this.currentArticle.plainText.replace(/\n\n/g, '<br><br>');
-      if (passActionBtn) {
-        passActionBtn.className = 'btn-primary';
-        passActionBtn.innerHTML = '<span>✅ 完成第 1 遍 ➔ 進入第 2 遍重音練習</span>';
+      if (recordBtn) {
+        recordBtn.className = 'btn-primary';
+        recordBtn.innerHTML = '<span>🎙️ 開始第 1 遍盲讀錄音 (摸索節奏)</span>';
       }
     } else {
       if (passTagEl) {
         passTagEl.className = 'pass-tag pass2';
         passTagEl.textContent = '第 2 遍：紅色粗體重音強化';
       }
-      if (passDescEl) passDescEl.textContent = '請在紅色粗體處加重語氣、放慢節奏，比對兩次讀法的力量感差異！';
+      if (passDescEl) passDescEl.textContent = '請點擊下方按鈕開始第 2 遍錄音，在紅色粗體處加重語氣、放慢節奏，比對兩次讀法的力量感差異！';
       if (contentEl) contentEl.innerHTML = this.currentArticle.markedText.replace(/\n\n/g, '<br><br>');
-      if (passActionBtn) {
-        if (this.todayState.task2Done) {
-          passActionBtn.className = 'btn-primary btn-success';
-          passActionBtn.innerHTML = '<span>👉 完成第 2 關！進入第 3 關：耐力隨心講 (5m)</span>';
-        } else {
-          passActionBtn.className = 'btn-primary';
-          passActionBtn.innerHTML = '<span>🎯 完成第 2 遍重音朗讀 (結算第 2 關)</span>';
-        }
+      if (recordBtn) {
+        recordBtn.className = 'btn-primary';
+        recordBtn.innerHTML = '<span>🎙️ 開始第 2 遍重音錄音 (強化力量感)</span>';
       }
     }
   }
 
+  async finishTask2Pass() {
+    const audioBar = document.getElementById('t2-audio-bar');
+    const recordBtn = document.getElementById('t2-record-btn');
+    const feedbackBox = document.getElementById('t2-feedback');
+    const studioContainer = document.getElementById('t2-studio-container');
+
+    if (audioBar) audioBar.style.display = 'none';
+
+    const result = await this.t2Media.stopRecording();
+    if (!result) return;
+
+    if (this.task2Pass === 1) {
+      // Completed Pass 1 -> Advance to Pass 2
+      this.task2Pass1Result = result;
+      this.task2Pass = 2;
+      this.todayState.task2Step1Done = true;
+      Storage.saveTodayState(this.todayKey, this.todayState);
+      
+      sound.taskComplete();
+      this.renderTask2Article();
+    } else {
+      // Completed Pass 2 -> Both passes ready! Run AI Contrast Analysis
+      this.task2Pass2Result = result;
+      this.todayState.task2Step2Done = true;
+
+      // Show Analyzing State
+      if (studioContainer) studioContainer.style.display = 'none';
+      if (feedbackBox) {
+        feedbackBox.style.display = 'block';
+        feedbackBox.innerHTML = `
+          <div class="analyzing-state-box">
+            <div class="spinner-glow"></div>
+            <h3 style="color:#F59E0B; margin:12px 0 6px; font-size:16px;">🧠 Gemini 正在進行雙重朗讀對比診斷...</h3>
+            <p style="color:#94A3B8; font-size:12px;">正在深度比對盲讀 vs 重音兩次音訊的咬字力量感、語速頓挫與氣場躍升</p>
+          </div>
+        `;
+      }
+
+      // Save Pass 1 & Pass 2 recordings to DB
+      await db.saveRecording({
+        id: `t2-p1-${this.todayKey}-${Date.now()}`,
+        date: this.todayKey,
+        taskId: 'task2-pass1',
+        blob: this.task2Pass1Result.blob,
+        duration: this.task2Pass1Result.duration
+      });
+      await db.saveRecording({
+        id: `t2-p2-${this.todayKey}-${Date.now()}`,
+        date: this.todayKey,
+        taskId: 'task2-pass2',
+        blob: this.task2Pass2Result.blob,
+        duration: this.task2Pass2Result.duration
+      });
+
+      // AI Contrast Evaluation
+      const report = await aiCoach.evaluateTask2DualPass(
+        this.task2Pass1Result,
+        this.task2Pass2Result,
+        this.currentArticle
+      );
+
+      this.todayState.task2Done = true;
+      this.todayState.task2Score = report;
+      Storage.saveTodayState(this.todayKey, this.todayState);
+
+      this.renderTask2Feedback(feedbackBox, report);
+      sound.taskComplete();
+      this.updateDailyProgress();
+    }
+  }
+
+  renderTask2Feedback(container, report) {
+    if (!container || !report) return;
+    container.style.display = 'block';
+
+    const p1Url = this.task2Pass1Result?.url || '';
+    const p2Url = this.task2Pass2Result?.url || '';
+
+    container.innerHTML = `
+      <div class="ai-report-card">
+        <div class="report-header">
+          <div class="report-title">
+            <span>🤖 雙重朗讀前後質變診斷</span>
+            <span style="font-size:11px; color:#94A3B8; font-weight:normal;">(Pass 1 vs Pass 2)</span>
+          </div>
+          <div class="growth-badge-pill">
+            ⚡ 力量感 ${report.growthPercent || '+28%'}
+          </div>
+        </div>
+
+        <!-- Dual Audio Listeners -->
+        <div class="dual-audio-card">
+          <div style="font-size:12px; font-weight:700; color:#FDE68A; margin-bottom:6px;">🎧 親耳聽聽兩次讀法的力量感差異：</div>
+          <div class="dual-audio-grid">
+            <div class="audio-track-item">
+              <div class="audio-track-header">
+                <span style="color:#94A3B8;">1️⃣ 第 1 遍（盲讀摸索）</span>
+                <span style="color:#FFF;">${this.task2Pass1Result?.duration || 0}s</span>
+              </div>
+              <audio src="${p1Url}" controls playsinline></audio>
+            </div>
+            <div class="audio-track-item" style="border-color:rgba(245, 158, 11, 0.4); background:rgba(245, 158, 11, 0.05);">
+              <div class="audio-track-header">
+                <span style="color:#F59E0B;">2️⃣ 第 2 遍（重音強化）</span>
+                <span style="color:#10B981; font-weight:bold;">${this.task2Pass2Result?.duration || 0}s 🔥</span>
+              </div>
+              <audio src="${p2Url}" controls playsinline></audio>
+            </div>
+          </div>
+        </div>
+
+        <!-- Radar Metrics Grid -->
+        <div class="metrics-radar-grid">
+          <div class="metric-item"><span>🎵 節奏頓挫</span><span class="metric-val">${report.scores?.cadenceRhythm || 90}</span></div>
+          <div class="metric-item"><span>💥 重音力量</span><span class="metric-val" style="color:#F59E0B;">${report.scores?.emphasisPower || 94}</span></div>
+          <div class="metric-item"><span>🗣️ 咬字清晰</span><span class="metric-val">${report.scores?.clarity || 88}</span></div>
+          <div class="metric-item"><span>🌟 自信氣場</span><span class="metric-val">${report.scores?.confidence || 92}</span></div>
+        </div>
+
+        <!-- Highlights -->
+        <div class="feedback-section">
+          <div class="feedback-label">✨ 兩次朗讀質變亮點 (Highlights)</div>
+          <div class="feedback-text">
+            ${(report.comparisonHighlights || []).map(h => `• ${h}`).join('<br>')}
+          </div>
+        </div>
+
+        <div class="feedback-section">
+          <div class="feedback-label">🎯 明日朗讀微行動 (Action)</div>
+          <div class="feedback-text" style="color:#FEF08A;">
+            ${report.improvement || '保持關鍵詞加重放慢，句子轉換時多留半拍呼吸！'}
+          </div>
+        </div>
+
+        <div class="coach-praise-box">
+          💬 教練寄語：${report.coachPraise || '雙重朗讀法效果驚人！第二次朗讀的重音力量感明顯躍升！🔥'}
+        </div>
+
+        <div class="next-step-btn-group" style="margin-top:14px;">
+          <button id="fb-t2-next-step-btn" class="btn-primary btn-success" style="width:100%; min-height:48px; font-size:15px;">
+            <span>👉 完成第 2 關！進入第 3 關：耐力隨心講 (5m)</span>
+          </button>
+          <button id="fb-t2-retry-btn" class="btn-secondary" style="width:100%; font-size:12px; margin-top:6px;">
+            <span>🔄 重新朗讀本篇</span>
+          </button>
+        </div>
+      </div>
+    `;
+
+    const nextBtn = container.querySelector('#fb-t2-next-step-btn');
+    if (nextBtn) {
+      nextBtn.onclick = () => {
+        this.switchTab('task3');
+      };
+    }
+
+    const retryBtn = container.querySelector('#fb-t2-retry-btn');
+    if (retryBtn) {
+      retryBtn.onclick = () => {
+        this.resetTask2Studio();
+      };
+    }
+  }
+
+  resetTask2Studio() {
+    const studioContainer = document.getElementById('t2-studio-container');
+    const feedbackBox = document.getElementById('t2-feedback');
+    this.task2Pass = 1;
+    this.task2Pass1Result = null;
+    this.task2Pass2Result = null;
+
+    if (feedbackBox) feedbackBox.style.display = 'none';
+    if (studioContainer) studioContainer.style.display = 'block';
+    this.renderTask2Article();
+  }
+
   // ==========================================
-  // TASK 3: 3~5min Endurance Flow Setup
+  // TASK 3: 3~5min Pure Voice Flow Setup
   // ==========================================
   setupTask3() {
-    const videoEl = document.getElementById('t3-video');
     const canvasEl = document.getElementById('t3-visualizer');
-    const placeholderEl = document.getElementById('t3-placeholder');
-    const overlayEl = document.getElementById('t3-overlay');
     const recordBtn = document.getElementById('t3-record-btn');
     const timerPill = document.getElementById('t3-timer');
-    const recIndicator = document.getElementById('t3-rec-indicator');
     const feedbackBox = document.getElementById('t3-feedback');
     const cheerToast = document.getElementById('t3-cheer-toast');
-    const studioContainer = document.getElementById('t3-studio-container');
+    const micPulse = document.getElementById('t3-mic-pulse');
+    const flowStatus = document.getElementById('t3-flow-status');
 
-    this.t3Media = new MediaController(videoEl, canvasEl);
+    this.t3Media = new MediaController(null, canvasEl);
 
     this.t3Media.onTick = (elapsed, remaining, progress, thresholdReached) => {
       const min = Math.floor(elapsed / 60);
       const sec = elapsed % 60;
-      timerPill.textContent = `${min}:${sec < 10 ? '0' : ''}${sec} / 5:00`;
+      if (timerPill) timerPill.textContent = `${min}:${sec < 10 ? '0' : ''}${sec} / 5:00`;
 
       if (elapsed >= 180) {
-        timerPill.style.color = '#10B981';
-        recordBtn.className = 'btn-primary btn-success';
-        recordBtn.innerHTML = `<span>✅ 滿 3 分鐘達標！點擊結束並分析 (${min}分${sec}秒)</span>`;
+        if (timerPill) timerPill.style.color = '#10B981';
+        if (recordBtn) {
+          recordBtn.className = 'btn-primary btn-success';
+          recordBtn.innerHTML = `<span>✅ 滿 3 分鐘達標！點擊結束並分析 (${min}分${sec}秒)</span>`;
+        }
       } else {
-        recordBtn.className = 'btn-primary recording';
-        recordBtn.innerHTML = `<span>⏹️ 耐力心流中 (${min}分${sec}秒 · 滿 3 分鐘達標)</span>`;
+        if (recordBtn) {
+          recordBtn.className = 'btn-primary recording';
+          recordBtn.innerHTML = `<span>⏹️ 語音心流中 (${min}分${sec}秒 · 滿 3 分鐘達標)</span>`;
+        }
       }
     };
 
@@ -400,57 +594,54 @@ class SpeakHeroApp {
       await this.finishTask3();
     };
 
-    recordBtn.addEventListener('click', async () => {
-      if (!this.t3Media.isRecording) {
-        // Show live camera preview & overlay, hide idle placeholder
-        if (placeholderEl) placeholderEl.style.display = 'none';
-        if (videoEl) videoEl.style.display = 'block';
-        if (overlayEl) overlayEl.style.display = 'flex';
+    if (recordBtn) {
+      recordBtn.addEventListener('click', async () => {
+        if (!this.t3Media.isRecording) {
+          if (micPulse) micPulse.classList.add('recording');
+          if (flowStatus) {
+            flowStatus.className = 'flow-status-text recording';
+            flowStatus.textContent = '🎙️ 語音心流中... 請暢所欲言！';
+          }
 
-        try {
-          await this.t3Media.startPreview(true);
-        } catch (err) {
-          console.warn('Camera preview failed:', err);
+          await this.runCountdown(recordBtn);
+          // Pure audio recording (withVideo: false)
+          await this.t3Media.startRecording({ minSeconds: 180, maxSeconds: 300, withVideo: false });
+          
+          recordBtn.classList.add('recording');
+          recordBtn.innerHTML = `<span>⏹️ 語音心流中 (0:00 / 5:00 · 滿 3 分鐘達標)</span>`;
+          this.startCheeringCycle(cheerToast);
+        } else {
+          // Finish Endurance Speech
+          await this.finishTask3();
         }
+      });
+    }
 
-        await this.runCountdown(recordBtn);
-        // Min 180s (3min), Max 300s (5min)
-        await this.t3Media.startRecording({ minSeconds: 180, maxSeconds: 300, withVideo: true });
-        recordBtn.classList.add('recording');
-        recordBtn.innerHTML = `<span>⏹️ 耐力心流中 (0:00 / 5:00 · 滿 3 分鐘達標)</span>`;
-        if (recIndicator) recIndicator.classList.add('active');
-        this.startCheeringCycle(cheerToast);
-      } else {
-        // Early finish allowed
-        await this.finishTask3();
-      }
-    });
-
-    // Clean initial state: Studio is always ready for a fresh endurance speech
     this.resetTask3Studio();
   }
 
   resetTask3Studio() {
     const studioContainer = document.getElementById('t3-studio-container');
     const feedbackBox = document.getElementById('t3-feedback');
-    const placeholderEl = document.getElementById('t3-placeholder');
-    const videoEl = document.getElementById('t3-video');
-    const overlayEl = document.getElementById('t3-overlay');
     const recordBtn = document.getElementById('t3-record-btn');
     const timerPill = document.getElementById('t3-timer');
+    const micPulse = document.getElementById('t3-mic-pulse');
+    const flowStatus = document.getElementById('t3-flow-status');
 
     if (feedbackBox) feedbackBox.style.display = 'none';
     if (studioContainer) studioContainer.style.display = 'block';
-    if (placeholderEl) placeholderEl.style.display = 'flex';
-    if (videoEl) videoEl.style.display = 'none';
-    if (overlayEl) overlayEl.style.display = 'none';
+    if (micPulse) micPulse.classList.remove('recording');
+    if (flowStatus) {
+      flowStatus.className = 'flow-status-text';
+      flowStatus.textContent = '點擊下方按鈕開始語音心流';
+    }
     if (timerPill) {
       timerPill.textContent = '0:00 / 5:00';
       timerPill.style.color = '#FFF';
     }
     if (recordBtn) {
       recordBtn.className = 'btn-primary';
-      recordBtn.innerHTML = '<span>🌊 開始 3~5 分鐘耐力隨心講</span>';
+      recordBtn.innerHTML = '<span>🎙️ 開始 3~5 分鐘耐力隨心講 (純語音)</span>';
       recordBtn.disabled = false;
     }
   }
@@ -693,14 +884,170 @@ class SpeakHeroApp {
       }
 
       Storage.saveTodayState(this.todayKey, this.todayState);
-      sound.celebrateFanfare();
-      this.triggerConfetti();
       this.checkMilestoneAvailability();
 
       // Auto-trigger Obsidian Sync and Telegram Push
       this.triggerObsidianSync(false);
       this.triggerTelegramPush(false);
+
+      // Trigger Celebration & Popup Daily Reward Modal
+      setTimeout(() => {
+        this.showDailyRewardModal(this.settings.currentStreak);
+      }, 500);
     }
+  }
+
+  // ==========================================
+  // Daily Streak Reward Modal (恭喜完成第 X 天)
+  // ==========================================
+  setupDailyRewardModal() {
+    const modal = document.getElementById('daily-reward-modal');
+    const closeBtn = document.getElementById('close-reward-btn');
+    const confirmBtn = document.getElementById('reward-confirm-btn');
+    const downloadCardBtn = document.getElementById('reward-download-card-btn');
+    const copyReportBtn = document.getElementById('reward-copy-report-btn');
+    const streakDashboard = document.querySelector('.streak-dashboard');
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+    }
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', () => modal.classList.remove('active'));
+    }
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.remove('active');
+      });
+    }
+
+    // Allow clicking streak cards to review today's reward if today is completed
+    if (streakDashboard) {
+      streakDashboard.style.cursor = 'pointer';
+      streakDashboard.addEventListener('click', (e) => {
+        if (e.target.closest('#sync-obsidian-btn') || e.target.closest('#send-tg-btn')) return;
+        if (this.todayState.isFullyCompleted) {
+          this.showDailyRewardModal(this.settings.currentStreak);
+        }
+      });
+    }
+
+    if (downloadCardBtn) {
+      downloadCardBtn.addEventListener('click', async () => {
+        downloadCardBtn.innerHTML = '<span>⏳ 正在生成榮譽卡片...</span>';
+        
+        let level = "L1 敢開口小白";
+        if (this.settings.currentStreak >= 15) level = "L4 說服演說大師";
+        else if (this.settings.currentStreak >= 10) level = "L3 氣場感染教練";
+        else if (this.settings.currentStreak >= 5) level = "L2 結構邏輯達人";
+
+        const quote = this.todayState.task2Score?.coachPraise || 
+                      this.todayState.task3Score?.coachPraise || 
+                      this.todayState.task1Score?.coachPraise || 
+                      '表達如同肌肉記憶，每一次開口都在為自信奠定基石！';
+
+        const cardUrl = await milestoneMgr.generateDailyStreakCardCanvas({
+          streakDays: this.settings.currentStreak,
+          level,
+          todayState: this.todayState,
+          coachQuote: quote,
+          articleTitle: this.currentArticle ? this.currentArticle.title : '認知短文'
+        });
+
+        const a = document.createElement('a');
+        a.href = cardUrl;
+        a.download = `SpeakHero_Day${this.settings.currentStreak}_打卡榮譽卡.png`;
+        a.click();
+
+        downloadCardBtn.innerHTML = '<span>📸 下載今日打卡榮譽卡片 (PNG)</span>';
+        sound.taskComplete();
+      });
+    }
+
+    if (copyReportBtn) {
+      copyReportBtn.addEventListener('click', async () => {
+        let level = "L1 敢開口小白";
+        if (this.settings.currentStreak >= 15) level = "L4 說服演說大師";
+        else if (this.settings.currentStreak >= 10) level = "L3 氣場感染教練";
+        else if (this.settings.currentStreak >= 5) level = "L2 結構邏輯達人";
+
+        const md = obsidianSync.formatObsidianSection(
+          this.todayKey,
+          this.settings.currentStreak,
+          level,
+          this.todayState,
+          this.currentArticle ? this.currentArticle.title : '認知短文'
+        );
+
+        const ok = await obsidianSync.copyToClipboard(md);
+        if (ok) {
+          copyReportBtn.innerHTML = '<span>✅ 已複製打卡戰報到剪貼簿！</span>';
+          setTimeout(() => {
+            copyReportBtn.innerHTML = '<span>📋 一鍵複製今日打卡戰報</span>';
+          }, 3000);
+          sound.taskComplete();
+        }
+      });
+    }
+  }
+
+  showDailyRewardModal(streakDays) {
+    const modal = document.getElementById('daily-reward-modal');
+    if (!modal) return;
+
+    let level = "L1 敢開口小白";
+    let nextTarget = "距離 L2 結構邏輯達人";
+    let nextDays = 5 - (streakDays % 5);
+    if (nextDays === 5) nextDays = 5;
+    let progressPercent = Math.min(100, Math.round(((streakDays % 5) / 5) * 100));
+    if (progressPercent === 0 && streakDays >= 5) progressPercent = 100;
+
+    if (streakDays >= 15) {
+      level = "L4 說服演說大師";
+      nextTarget = "已達頂級演說大師段位";
+      nextDays = 0;
+      progressPercent = 100;
+    } else if (streakDays >= 10) {
+      level = "L3 氣場感染教練";
+      nextTarget = "距離 L4 說服演說大師";
+      nextDays = 15 - streakDays;
+      progressPercent = Math.round(((streakDays - 10) / 5) * 100);
+    } else if (streakDays >= 5) {
+      level = "L2 結構邏輯達人";
+      nextTarget = "距離 L3 氣場感染教練";
+      nextDays = 10 - streakDays;
+      progressPercent = Math.round(((streakDays - 5) / 5) * 100);
+    }
+
+    const titleEl = document.getElementById('reward-modal-title');
+    const subtitleEl = document.getElementById('reward-modal-subtitle');
+    const streakNumEl = document.getElementById('reward-streak-num');
+    const dayPillEl = document.getElementById('reward-day-pill');
+    const levelTextEl = document.getElementById('reward-level-text');
+    const totalMinEl = document.getElementById('reward-total-min');
+    const nextTargetEl = document.getElementById('reward-next-level-target');
+    const nextDaysEl = document.getElementById('reward-next-level-days');
+    const progressFillEl = document.getElementById('reward-level-progress-fill');
+    const coachQuoteEl = document.getElementById('reward-coach-quote');
+
+    if (titleEl) titleEl.textContent = `🎉 恭喜完成第 ${streakDays} 天打卡！`;
+    if (subtitleEl) subtitleEl.textContent = `今日 15 分鐘口語表達修煉已全數通關！`;
+    if (streakNumEl) streakNumEl.textContent = `${streakDays} 天`;
+    if (dayPillEl) dayPillEl.textContent = `DAY ${streakDays}`;
+    if (levelTextEl) levelTextEl.textContent = level;
+    if (totalMinEl) totalMinEl.textContent = `${this.settings.totalPracticeMinutes || (streakDays * 15)} 分鐘`;
+    if (nextTargetEl) nextTargetEl.textContent = nextTarget;
+    if (nextDaysEl) nextDaysEl.textContent = nextDays > 0 ? `還差 ${nextDays} 天 🔥` : `巔峰極限 🏆`;
+    if (progressFillEl) progressFillEl.style.width = `${progressPercent}%`;
+
+    const quote = this.todayState.task2Score?.coachPraise || 
+                  this.todayState.task3Score?.coachPraise || 
+                  this.todayState.task1Score?.coachPraise || 
+                  '恭喜又完成一天的堅持！表達如同肌肉記憶，每一次開口都在為未來的自信發聲奠定基石！';
+    if (coachQuoteEl) coachQuoteEl.textContent = `「${quote}」`;
+
+    modal.classList.add('active');
+    sound.celebrateFanfare();
+    this.triggerConfetti();
   }
 
   // Render AI feedback cards with Next-Step & Retry action buttons
@@ -966,6 +1313,7 @@ class SpeakHeroApp {
     const saveBtn = document.getElementById('save-settings-btn');
     const apiKeyInput = document.getElementById('setting-gemini-key');
     const soundToggle = document.getElementById('setting-sound-toggle');
+    const testCompleteTodayBtn = document.getElementById('test-complete-today-btn');
     const testDay5Btn = document.getElementById('test-day5-btn');
     const resetTodayBtn = document.getElementById('reset-today-btn');
 
@@ -994,6 +1342,23 @@ class SpeakHeroApp {
         aiCoach.updateSettings();
         modal.classList.remove('active');
         sound.taskComplete();
+      });
+    }
+
+    // Quick Test Mode: Simulate 3 Tasks Complete Today (Triggers Reward Modal)
+    if (testCompleteTodayBtn) {
+      testCompleteTodayBtn.addEventListener('click', () => {
+        this.todayState.task1Done = true;
+        this.todayState.task1Score = aiCoach.heuristicTask1(45, '模擬今日核心觀點提煉');
+        this.todayState.task2Step1Done = true;
+        this.todayState.task2Step2Done = true;
+        this.todayState.task2Done = true;
+        this.todayState.task2Score = aiCoach.heuristicTask2DualPass({ duration: 38 }, { duration: 48 }, this.currentArticle);
+        this.todayState.task3Done = true;
+        this.todayState.task3Score = aiCoach.heuristicTask3(195, '模擬耐力心流表達');
+        
+        modal.classList.remove('active');
+        this.updateDailyProgress();
       });
     }
 

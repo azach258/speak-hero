@@ -159,6 +159,192 @@ export class MilestoneManager {
 
     return canvas.toDataURL('image/png');
   }
+
+  // Generate Daily Streak Achievement Share Card (Day 2, Day 3, etc.)
+  async generateDailyStreakCardCanvas(options = {}) {
+    const {
+      streakDays = 2,
+      level = 'L1 敢開口小白',
+      todayState = {},
+      coachQuote = '表達如同肌肉記憶，每一次開口都在為自信奠定基石！',
+      studentName = 'Raymond 董事長',
+      articleTitle = '認知文章'
+    } = options;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 800;
+    canvas.height = 1000;
+    const ctx = canvas.getContext('2d');
+
+    // Background Gradient
+    const bgGrad = ctx.createLinearGradient(0, 0, 800, 1000);
+    bgGrad.addColorStop(0, '#1E1B4B');
+    bgGrad.addColorStop(0.4, '#0F172A');
+    bgGrad.addColorStop(1, '#0B0F19');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, 800, 1000);
+
+    // Gold Border
+    ctx.strokeStyle = '#F59E0B';
+    ctx.lineWidth = 5;
+    ctx.strokeRect(25, 25, 750, 950);
+    ctx.strokeStyle = 'rgba(245, 158, 11, 0.3)';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(35, 35, 730, 930);
+
+    const drawRoundRect = (x, y, w, h, r) => {
+      if (ctx.roundRect) {
+        ctx.beginPath();
+        ctx.roundRect(x, y, w, h, r);
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+    };
+
+    // Header Logo & Brand
+    ctx.fillStyle = '#F59E0B';
+    ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🔥 SpeakHero · 15分鐘每日表達刻意練習', 400, 80);
+
+    // Big Flame / Badge Circle
+    ctx.fillStyle = '#F59E0B';
+    ctx.beginPath();
+    ctx.arc(400, 185, 60, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#1E1B4B';
+    ctx.beginPath();
+    ctx.arc(400, 185, 52, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#F59E0B';
+    ctx.font = 'bold 36px system-ui, -apple-system, sans-serif';
+    ctx.fillText('🔥', 400, 180);
+    ctx.fillStyle = '#FEF08A';
+    ctx.font = 'bold 18px system-ui, -apple-system, sans-serif';
+    ctx.fillText(`DAY ${streakDays}`, 400, 215);
+
+    // Big Title
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 34px system-ui, -apple-system, sans-serif';
+    ctx.fillText(`🎉 恭喜完成第 ${streakDays} 天打卡！`, 400, 290);
+
+    // Subtitle
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = '18px system-ui, -apple-system, sans-serif';
+    ctx.fillText(`${studentName} · 今日 15 分鐘口語表達修煉全數通關`, 400, 325);
+
+    // Stats Grid Box
+    ctx.fillStyle = '#1E293B';
+    drawRoundRect(60, 360, 680, 90, 16);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    const stats = [
+      { label: '連續打卡', val: `${streakDays} 天`, x: 170 },
+      { label: '當前段位', val: level, x: 400 },
+      { label: '累計修煉', val: `${streakDays * 15} 分鐘`, x: 630 }
+    ];
+
+    stats.forEach(s => {
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = '15px system-ui, -apple-system, sans-serif';
+      ctx.fillText(s.label, s.x, 395);
+      ctx.fillStyle = '#F59E0B';
+      ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
+      ctx.fillText(s.val, s.x, 430);
+    });
+
+    // 3 Completed Task Modules Card
+    ctx.fillStyle = '#151D2F';
+    drawRoundRect(60, 475, 680, 230, 16);
+    ctx.fill();
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#F8FAFC';
+    ctx.font = 'bold 18px system-ui, -apple-system, sans-serif';
+    ctx.fillText('✅ 今日 15 分鐘通關修煉項目：', 90, 510);
+
+    const t1Score = todayState.task1Score?.overallScore || 90;
+    const t2Score = todayState.task2Score?.pass2Score || 92;
+    const t3Score = todayState.task3Score?.overallScore || 92;
+
+    const taskItems = [
+      { num: '1', title: '30~60s 無稿快練', desc: '結論先行 · 快速組織語言與結構', score: `${t1Score} 分` },
+      { num: '2', title: '300字雙重朗讀法', desc: `《${articleTitle}》盲讀與紅字重音前後對比`, score: `${t2Score} 分` },
+      { num: '3', title: '3~5分鐘耐力隨心講', desc: '純語音心流 · 克服停頓焦慮與大膽開口', score: `${t3Score} 分` }
+    ];
+
+    taskItems.forEach((t, idx) => {
+      const y = 550 + idx * 48;
+      ctx.fillStyle = '#10B981';
+      ctx.font = 'bold 18px system-ui, -apple-system, sans-serif';
+      ctx.fillText(`✓ 任務 ${t.num}：${t.title}`, 90, y);
+
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = '14px system-ui, -apple-system, sans-serif';
+      ctx.fillText(`(${t.desc})`, 330, y);
+
+      ctx.fillStyle = '#F59E0B';
+      ctx.font = 'bold 16px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(t.score, 710, y);
+      ctx.textAlign = 'left';
+    });
+
+    // Coach Praise Box
+    ctx.fillStyle = 'rgba(245, 158, 11, 0.08)';
+    drawRoundRect(60, 725, 680, 140, 16);
+    ctx.fill();
+    ctx.strokeStyle = '#F59E0B';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#F59E0B';
+    ctx.font = 'bold 16px system-ui, -apple-system, sans-serif';
+    ctx.fillText('💬 AI 教練今日認可：', 90, 760);
+
+    ctx.fillStyle = '#E2E8F0';
+    ctx.font = 'italic 16px system-ui, -apple-system, sans-serif';
+    const wrapQuote = (text, x, y, maxWidth, lineHeight) => {
+      let words = text.split('');
+      let line = '';
+      for (let n = 0; n < words.length; n++) {
+        let testLine = line + words[n];
+        let metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && n > 0) {
+          ctx.fillText(line, x, y);
+          line = words[n];
+          y += lineHeight;
+        } else {
+          line = testLine;
+        }
+      }
+      ctx.fillText(line, x, y);
+    };
+    wrapQuote(coachQuote, 90, 795, 620, 26);
+
+    // Footer
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#64748B';
+    ctx.font = '15px system-ui, -apple-system, sans-serif';
+    const dateStr = new Date().toISOString().split('T')[0];
+    ctx.fillText(`打卡日期：${dateStr} ｜ 用認知照亮方向，用表達積蓄力量 🚀`, 400, 920);
+
+    return canvas.toDataURL('image/png');
+  }
 }
 
 export const milestoneMgr = new MilestoneManager();
