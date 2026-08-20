@@ -23,8 +23,8 @@ export class ObsidianSync {
     // Task 1
     const t1Status = todayState.task1Done ? '✅ 已完成' : '⚪ 未完成';
     const t1Score = (t1 && t1.overallScore) ? `${t1.overallScore} 分` : '-';
-    const t1Note = (t1 && t1.improvement) ? t1.improvement.replace(/\|/g, '/') : '快速提煉今日核心觀點';
-    md += `| **任務 1** | 30~60s 無稿快練 (結論先行) | ${t1Status} | ${t1Score} | ${t1Note} |\n`;
+    const t1Note = (t1 && t1.improvement) ? t1.improvement.replace(/\|/g, '/') : '60s聽音提煉與邏輯重述';
+    md += `| **任務 1** | 60s聽音 + 45~60s邏輯重述 | ${t1Status} | ${t1Score} | ${t1Note} |\n`;
 
     // Task 2
     const t2Status = todayState.task2Done ? '✅ 已完成' : '⚪ 未完成';
@@ -41,7 +41,7 @@ export class ObsidianSync {
     if (t1 || t2 || t3) {
       md += `### 🤖 AI 教練深度診斷亮點\n`;
       if (t1 && t1.strengths) {
-        md += `- **無稿提煉亮點**：${t1.strengths.join('；')}\n`;
+        md += `- **聽音重述亮點**：${t1.strengths.join('；')}\n`;
       }
       if (t2 && t2.comparisonHighlights) {
         md += `- **雙重朗讀質變**：${t2.comparisonHighlights.join('；')} (力量感提升 ${t2.growthPercent || '+28%'})\n`;

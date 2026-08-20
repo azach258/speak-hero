@@ -3,7 +3,7 @@
  * Ensures offline shell caching & smooth standalone PWA launch without 404.
  */
 
-const CACHE_NAME = 'speakhero-v1.1';
+const CACHE_NAME = 'speakhero-v1.2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -11,6 +11,7 @@ const ASSETS_TO_CACHE = [
   './js/app.js',
   './js/db.js',
   './js/articles.js',
+  './js/audio-pool.js',
   './js/audio-fx.js',
   './js/media.js',
   './js/ai-coach.js',

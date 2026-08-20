@@ -24,7 +24,7 @@ export class TelegramNotifier {
 
     // Task 1
     if (todayState.task1Done && t1) {
-      msg += `✅ *任務 1：30~60s 無稿提煉*（${t1.overallScore || 90} 分）\n`;
+      msg += `✅ *任務 1：60s聽音 + 45~60s邏輯重述*（${t1.overallScore || 90} 分）\n`;
       if (t1.strengths && t1.strengths[0]) {
         msg += `   • 亮點：${t1.strengths[0]}\n`;
       }
@@ -32,7 +32,7 @@ export class TelegramNotifier {
         msg += `   • 明日微目標：_${t1.improvement}_\n`;
       }
     } else {
-      msg += `⚪ *任務 1：30~60s 無稿提煉*（未完成）\n`;
+      msg += `⚪ *任務 1：60s聽音 + 45~60s邏輯重述*（未完成）\n`;
     }
 
     // Task 2

@@ -66,7 +66,7 @@
           <div id="daily-progress-fill" class="progress-bar-fill"></div>
         </div>
         <div class="task-steps-pills">
-          <div id="step-pill-1" class="step-pill">1. 無稿提煉</div>
+          <div id="step-pill-1" class="step-pill">1. 聽音重述</div>
           <div id="step-pill-2" class="step-pill">2. 雙重朗讀</div>
           <div id="step-pill-3" class="step-pill">3. 耐力心流</div>
         </div>
@@ -94,7 +94,7 @@
 
     <!-- Task Navigation Tabs -->
     <nav class="task-tabs-nav">
-      <button class="tab-btn active" data-tab="task1">🎯 1. 無稿提煉 (60s)</button>
+      <button class="tab-btn active" data-tab="task1">🎯 1. 聽音重述 (60s+45s)</button>
       <button class="tab-btn" data-tab="task2">📖 2. 雙重朗讀 (300字)</button>
       <button class="tab-btn" data-tab="task3">🌊 3. 耐力隨心講 (5m)</button>
     </nav>
@@ -103,46 +103,118 @@
     <main class="main-content">
 
       <!-- ==========================================
-           PANEL 1: 30~60s Flash Summary
+           PANEL 1: 60s Audio Listen + 45~60s Restatement
            ========================================== -->
       <div id="panel-task1" class="task-panel active">
         <div class="task-header-card">
-          <span class="task-badge">任務 1 · 快速組織語言</span>
-          <h2 class="task-title">30~60 秒無稿快練</h2>
-          <p class="task-desc">請無稿總結今天或昨天遇到的<strong>一件事</strong>、或學到的<strong>一個新觀點/知識</strong>。結論先行，滿 30 秒即可完成！</p>
+          <span class="task-badge">任務 1 · 聽音提煉與邏輯重述</span>
+          <h2 class="task-title">60 秒聽音 ➔ 45~60 秒邏輯重述</h2>
+          <p class="task-desc">先完整聆聽 60 秒認知音訊（羅胖精選），播放完畢後有 <strong>3 秒思考緩衝</strong>，再用自己的邏輯與語言重述 45~60 秒。滿 45 秒即可達標！</p>
         </div>
 
         <!-- Interactive Studio Area (Hides when report is ready) -->
         <div id="t1-studio-container">
           <!-- Encouragement Banner -->
           <div class="encouragement-banner">
-            <span class="enc-icon">💖</span>
+            <span class="enc-icon">💡</span>
             <div class="enc-text">
-              <strong>Just Do It！</strong> 不論好不好都沒關係、停頓結巴也完全正常！滿 30 秒即可點擊完成！
+              <strong>告別冷啟動！</strong> 先聽後說，汲取觀點結構。滿 45 秒即可完成，AI 將針對觀點抓取率與重述邏輯進行深度診斷！
             </div>
           </div>
 
-          <!-- Camera Studio -->
-          <div id="t1-studio" class="camera-studio">
-            <video id="t1-video" class="camera-preview" autoplay playsinline muted style="display:none;"></video>
-            <div id="t1-placeholder" class="camera-idle-placeholder">
-              <span style="font-size:36px;">📸</span>
-              <p style="font-size:13px; color:#94A3B8;">鏡頭已休眠<br>點擊下方按鈕開始前鏡頭錄影</p>
-            </div>
-            <div id="t1-overlay" class="camera-overlay" style="display:none;">
-              <div id="t1-rec-indicator" class="rec-indicator">
-                <span class="rec-dot"></span> 錄製中
+          <!-- Step 1: 60s Audio Listening Card -->
+          <div id="t1-audio-card" class="audio-listen-card">
+            <div class="audio-card-header">
+              <div class="audio-meta">
+                <span id="t1-audio-speaker-badge" class="speaker-badge">🎙️ 羅胖 60 秒</span>
+                <span id="t1-audio-category" class="category-badge">認知成長</span>
               </div>
-              <div id="t1-timer" class="timer-pill">0s / 60s</div>
+              <button id="t1-switch-audio-btn" class="btn-secondary" style="min-height:34px; padding:0 10px; font-size:12px;">
+                🔄 換一段
+              </button>
             </div>
-            <canvas id="t1-visualizer" class="audio-visualizer-canvas"></canvas>
+
+            <h3 id="t1-audio-title" class="audio-title">成事的秘密：把目標拆解成微小行動</h3>
+
+            <!-- Custom Audio Player Bar -->
+            <div class="custom-audio-player">
+              <audio id="t1-audio-elem" preload="metadata"></audio>
+              
+              <button id="t1-audio-play-btn" class="audio-play-ctrl-btn" title="播放 / 暫停">
+                <span id="t1-play-icon">▶️</span>
+              </button>
+
+              <div class="audio-progress-wrap">
+                <div id="t1-audio-progress-bar" class="audio-progress-bar">
+                  <div id="t1-audio-progress-fill" class="audio-progress-fill"></div>
+                </div>
+                <div class="audio-time-row">
+                  <span id="t1-audio-current-time">0:00</span>
+                  <span id="t1-audio-status-hint" style="color:#F59E0B; font-size:11px;">點擊播放開始聆聽 60s 語音</span>
+                  <span id="t1-audio-duration">1:00</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Expandable Core Key Points (Cheat Sheet) -->
+            <div class="audio-tips-toggle-wrap">
+              <button id="t1-toggle-tips-btn" class="tips-toggle-btn">
+                <span>👁️ 展開核心論點提示</span>
+              </button>
+              <div id="t1-audio-tips" class="audio-tips-content" style="display:none;">
+                <ul id="t1-tips-list">
+                  <li>1. 宏大目標帶來焦慮，微小動作帶來掌控感</li>
+                  <li>2. 不要等待狀態完美才開始，用行動倒逼狀態</li>
+                  <li>3. 每天前進 1%，複利會為你解決剩下的 99%</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Direct Start Challenge Button -->
+            <div style="margin-top:10px;">
+              <button id="t1-start-challenge-btn" class="btn-secondary" style="width:100%; min-height:40px; font-size:13px; color:#FDE68A; border-color:rgba(245, 158, 11, 0.4);">
+                <span>⚡ 已聽懂，直接開始 3 秒思考與重述 ➔</span>
+              </button>
+            </div>
           </div>
 
-          <!-- Controls -->
-          <div class="controls-bar">
-            <button id="t1-record-btn" class="btn-primary">
-              <span>🎯 開始 30~60s 無稿提煉</span>
-            </button>
+          <!-- Step 2: 3-Second Thinking Buffer Countdown Box (Animated) -->
+          <div id="t1-thinking-box" class="thinking-buffer-box" style="display:none;">
+            <div class="thinking-glow-ring">
+              <div id="t1-thinking-num" class="thinking-count-number">3</div>
+            </div>
+            <div class="thinking-title">🧠 思考緩衝時間：理清邏輯脈絡</div>
+            <div class="thinking-tips">請在腦中組織：① 核心結論是什麼？ ② 支撐論據有哪兩點？</div>
+          </div>
+
+          <!-- Step 3: 45~60s Restatement Recording Studio -->
+          <div id="t1-rec-studio-wrap" style="display:block;">
+            <div class="studio-sub-header">
+              <span style="font-size:13px; font-weight:700; color:#F8FAFC;">🎙️ 進行 45~60 秒邏輯重述</span>
+              <span id="t1-mode-badge" style="font-size:11px; color:#94A3B8; background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:4px;">滿 45s 達標</span>
+            </div>
+
+            <div id="t1-studio" class="camera-studio">
+              <video id="t1-video" class="camera-preview" autoplay playsinline muted style="display:none;"></video>
+              <div id="t1-placeholder" class="camera-idle-placeholder">
+                <span style="font-size:36px;">🎙️</span>
+                <p style="font-size:13px; color:#94A3B8; margin-top:8px;">聽完音訊或點擊下方按鈕<br>開啟 45~60s 邏輯重述</p>
+              </div>
+              <div id="t1-overlay" class="camera-overlay" style="display:none;">
+                <div id="t1-rec-indicator" class="rec-indicator">
+                  <span class="rec-dot"></span> 邏輯重述錄製中
+                </div>
+                <div id="t1-timer" class="timer-pill">0s / 60s</div>
+              </div>
+              <canvas id="t1-visualizer" class="audio-visualizer-canvas"></canvas>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls-bar">
+              <button id="t1-record-btn" class="btn-primary">
+                <span>🎯 開始 45~60s 邏輯重述錄音</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -155,15 +227,15 @@
            ========================================== -->
       <div id="panel-task2" class="task-panel">
         <div class="task-header-card">
-          <span class="task-badge">任務 2 · 咬字重音肌肉記憶</span>
-          <h2 class="task-title">300 字雙重朗讀法</h2>
-          <p class="task-desc">大聲朗讀 2 遍並錄音：第 1 遍盲讀摸索節奏，第 2 遍看紅色粗體重音強化力量感，AI 即時進行前後對比！</p>
+          <span class="task-badge">任務 2 · 雙軌朗讀與重音肌肉記憶</span>
+          <h2 class="task-title">300 字雙軌朗讀（素讀 ➔ 精讀）</h2>
+          <p class="task-desc">大聲朗讀 2 遍並錄音：第 1 遍「模式 A 素讀」（純文字無提示摸索節奏），第 2 遍「模式 B 精讀」（看加粗重音、/微停頓、//長停頓留白），AI 自動前後對比質變！</p>
         </div>
 
         <div id="t2-studio-container">
           <div class="reading-container">
             <div class="reading-pass-badge">
-              <span id="t2-pass-tag" class="pass-tag pass1">第 1 遍：純文字盲讀</span>
+              <span id="t2-pass-tag" class="pass-tag pass1">🌱 第一次：純文字素讀（模式 A）</span>
               <button id="t2-switch-article-btn" class="btn-secondary" style="min-height:36px; padding:0 12px; font-size:12px;">
                 🔄 換一篇
               </button>
@@ -174,18 +246,25 @@
               <span id="t2-art-category" style="font-size:11px; color:#94A3B8; background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:4px;">認知成長</span>
             </div>
 
-            <p id="t2-pass-desc" style="font-size:12px; color:#FDE68A; margin-bottom:12px; font-weight:600;">
-              請點擊下方按鈕開始第 1 遍錄音，大聲朗讀一遍，自行摸索說話節奏。
+            <p id="t2-pass-desc" style="font-size:12px; color:#FDE68A; margin-bottom:10px; font-weight:600;">
+              請點擊下方按鈕開始第一次錄音，大聲朗讀全文，無任何標註，自行摸索說話節奏與語調。
             </p>
+
+            <!-- Mode B Visual Annotation Legend (Shown in Pass 2) -->
+            <div id="t2-legend-box" class="reading-legend-box" style="display:none;">
+              <div class="legend-item"><span class="legend-dot stress-dot"></span> <strong>粗體</strong>：重音發力</div>
+              <div class="legend-item"><span class="legend-dot short-dot"></span> <span class="pause-short">/</span>：微停頓換氣 (半拍)</div>
+              <div class="legend-item"><span class="legend-dot long-dot"></span> <span class="pause-long">//</span>：長停頓留白 (一拍)</div>
+            </div>
 
             <div id="t2-art-content" class="article-content">
               載入文章中...
             </div>
 
             <!-- Mini Audio Status Bar for Task 2 -->
-            <div id="t2-audio-bar" class="audio-status-bar" style="display:none; margin-top:12px;">
+            <div id="t2-audio-bar" class="audio-status-bar" style="display:none; margin-top:14px;">
               <div class="rec-indicator active">
-                <span class="rec-dot"></span> <span id="t2-rec-label">錄音中</span>
+                <span class="rec-dot"></span> <span id="t2-rec-label">第一次素讀錄音中</span>
               </div>
               <canvas id="t2-visualizer" class="mini-visualizer-canvas"></canvas>
               <div id="t2-timer" class="timer-pill">0s</div>
@@ -194,7 +273,7 @@
 
           <div class="controls-bar">
             <button id="t2-record-btn" class="btn-primary">
-              <span>🎙️ 開始第 1 遍盲讀錄音 (摸索節奏)</span>
+              <span>🎙️ 開始第一次錄音（素讀）</span>
             </button>
           </div>
         </div>
@@ -359,90 +438,118 @@
     </div>
 
     <!-- ==========================================
-         DAILY STREAK REWARD MODAL (恭喜完成第 X 天)
+         DAILY STREAK REWARD MODAL (文青手帳風打卡成果獎狀)
          ========================================== -->
     <div id="daily-reward-modal" class="modal-overlay">
-      <div class="modal-container reward-modal-container">
-        <!-- Golden Shine Rays Background Animation -->
-        <div class="shine-rays-bg"></div>
-
-        <div class="modal-header" style="border:none; padding-bottom:0; justify-content:flex-end;">
-          <button id="close-reward-btn" class="close-btn" style="z-index:10;">&times;</button>
+      <div class="modal-container journal-reward-container">
+        
+        <div class="modal-header" style="border:none; padding-bottom:4px; justify-content:flex-end;">
+          <button id="close-reward-btn" class="close-btn" style="z-index:10; font-size:24px; color:#786C62;">&times;</button>
         </div>
 
-        <div class="reward-modal-body">
-          <!-- Big Animated Badge -->
-          <div class="reward-badge-wrapper">
-            <div class="reward-badge-glow"></div>
-            <div class="reward-badge-icon">
-              <span id="reward-badge-emoji">🔥</span>
-              <div id="reward-day-pill" class="reward-day-pill">DAY 2</div>
-            </div>
-          </div>
+        <div class="journal-poster-wrapper">
+          <!-- 9:16 Japanese Stationery & Journal Award Poster -->
+          <div id="award-poster" class="award-poster">
+            <div class="poster-inner-card">
+              
+              <!-- Top Brand Header -->
+              <div class="poster-header">
+                <div class="poster-sub-brand">✦ SPEAK HERO · 每日口語修煉 ✦</div>
+                <h1 class="poster-main-title">今日修煉成果證書</h1>
+                <div class="poster-header-line"></div>
+              </div>
 
-          <h2 id="reward-modal-title" class="reward-title">🎉 恭喜完成第 2 天打卡！</h2>
-          <p id="reward-modal-subtitle" class="reward-subtitle">今日 15 分鐘口語表達修煉已全數通關！</p>
+              <!-- Hero Badge: 暖陽杏桃漸層底色的「堅持勳章」 -->
+              <div class="poster-hero-badge">
+                <div class="badge-icon-wrap">🌱</div>
+                <div class="badge-streak-title">
+                  連續打卡第 <span id="poster-streak-num" class="badge-num">1</span> 天
+                </div>
+                <div class="badge-subtitle">✨ 堅持的力量 · 靜待花開 ✨</div>
+              </div>
 
-          <!-- Streak & Level Status Card -->
-          <div class="reward-stats-card">
-            <div class="reward-stat-item">
-              <span class="r-label">連續打卡</span>
-              <span id="reward-streak-num" class="r-val highlight">2 天</span>
-            </div>
-            <div class="reward-divider"></div>
-            <div class="reward-stat-item">
-              <span class="r-label">當前段位</span>
-              <span id="reward-level-text" class="r-val">L1 敢開口小白</span>
-            </div>
-            <div class="reward-divider"></div>
-            <div class="reward-stat-item">
-              <span class="r-label">累計修煉</span>
-              <span id="reward-total-min" class="r-val">30 分鐘</span>
-            </div>
-          </div>
+              <!-- 3-Stage Checklist with Sage Green Checkmarks -->
+              <div class="poster-section-box">
+                <div class="poster-section-title">【 今日三階段修煉全數通關 】</div>
+                <ul class="poster-checklist">
+                  <li class="check-item">
+                    <span class="check-icon">✔</span>
+                    <span class="check-text"><strong>階段一</strong> · 60秒聽音提煉與邏輯重述</span>
+                  </li>
+                  <li class="check-item">
+                    <span class="check-icon">✔</span>
+                    <span class="check-text"><strong>階段二</strong> · 300字雙軌朗讀（重音頓挫）</span>
+                  </li>
+                  <li class="check-item">
+                    <span class="check-icon">✔</span>
+                    <span class="check-text"><strong>階段三</strong> · 3~5分鐘耐力隨心講心流</span>
+                  </li>
+                </ul>
+              </div>
 
-          <!-- Level Progression Bar -->
-          <div class="reward-level-progress-box">
-            <div class="progress-info-row">
-              <span id="reward-next-level-target">距離 L2 結構邏輯達人</span>
-              <span id="reward-next-level-days">還差 3 天 🔥</span>
-            </div>
-            <div class="progress-bar-bg">
-              <div id="reward-level-progress-fill" class="progress-bar-fill" style="width: 40%;"></div>
-            </div>
-          </div>
+              <!-- AI Highlights -->
+              <div class="poster-section-box highlight-box">
+                <div class="poster-section-title">【 今日 AI 教練進步評析 】</div>
+                <div class="highlight-item">
+                  <span class="highlight-tag">🔥 雙軌朗讀</span>
+                  <span id="poster-task2-highlight" class="highlight-text">力量感提升 +32%，重音與停頓頓挫分明</span>
+                </div>
+                <div class="highlight-item">
+                  <span class="highlight-tag">🎙️ 耐力心流</span>
+                  <span id="poster-task3-highlight" class="highlight-text">順暢講滿 3 分鐘，語流自信自然、能量充沛</span>
+                </div>
+              </div>
 
-          <!-- Coach Praise Quote Box -->
-          <div class="reward-quote-box">
-            <div style="font-size:12px; color:#F59E0B; font-weight:800; margin-bottom:4px;">💬 今日教練認可：</div>
-            <div id="reward-coach-quote" style="font-size:13px; color:#E2E8F0; line-height:1.5;">
-              「恭喜又完成一天的堅持！表達如同肌肉記憶，每一次開口都在為未來的自信發聲奠定基石！」
+              <!-- Core Soul Quote: 上下虛線框住大字 -->
+              <div class="poster-soul-quote-box">
+                <div class="quote-symbol">❝</div>
+                <p id="poster-soul-quote" class="quote-text">
+                  每日進步，對自己負責；<br>
+                  刻劃更美好的自己，活出自己夢想的樣子！
+                </p>
+                <div class="quote-author">— SpeakHero 成長箴言 —</div>
+              </div>
+
+              <!-- Bottom Certification Date & Vermilion Red Stamp Seal -->
+              <div class="poster-footer">
+                <div class="footer-left">
+                  <div class="cert-label">修煉認證日</div>
+                  <div id="poster-cert-date" class="cert-date">2026.08.19</div>
+                  <div class="cert-id">認證編號：SH-<span id="poster-cert-id">20260819</span></div>
+                </div>
+
+                <!-- 朱砂紅傾斜方印 -->
+                <div class="vermilion-seal-stamp">
+                  <div class="seal-inner">
+                    <span>修煉</span>
+                    <span>合格</span>
+                  </div>
+                </div>
+              </div>
+
             </div>
-          </div>
-
-          <!-- Sync Notice Status -->
-          <div class="reward-sync-badge">
-            <span>🧠 Obsidian 每日複盤與 TG 戰報已自動同步完畢</span>
-          </div>
-
-          <!-- Action Buttons -->
-          <div class="reward-actions-grid" style="margin-top:14px; display:flex; flex-direction:column; gap:8px;">
-            <button id="reward-download-card-btn" class="btn-primary btn-success" style="min-height:48px; font-size:14px;">
-              <span>📸 下載今日打卡榮譽卡片 (PNG)</span>
-            </button>
-            <button id="reward-copy-report-btn" class="btn-secondary" style="min-height:42px; font-size:13px;">
-              <span>📋 一鍵複製今日打卡戰報</span>
-            </button>
-            <button id="reward-confirm-btn" class="btn-primary" style="min-height:44px; background:linear-gradient(135deg, #374151, #1F2937); border-color:rgba(255,255,255,0.15);">
-              <span>🚀 太棒了，明日繼續保持！</span>
-            </button>
           </div>
         </div>
+
+        <!-- Poster Action Buttons -->
+        <div class="poster-actions-bar" style="margin-top:14px; display:flex; flex-direction:column; gap:8px;">
+          <button id="reward-download-card-btn" class="btn-primary" style="min-height:48px; background:linear-gradient(135deg, #D96B43, #B8533D); color:#FFF; font-size:15px; font-weight:800; border:none; box-shadow:0 4px 15px rgba(184, 83, 61, 0.35);">
+            <span>📸 儲存 / 分享修煉海報 (PNG)</span>
+          </button>
+          <button id="reward-copy-report-btn" class="btn-secondary" style="min-height:42px; font-size:13px; background:#FAF7F2; border-color:#D6CEC5; color:#5C524A;">
+            <span>📋 一鍵複製今日打卡戰報 (Obsidian)</span>
+          </button>
+          <button id="reward-confirm-btn" class="btn-secondary" style="min-height:40px; font-size:12px; color:#8C7E74; border-color:transparent;">
+            <span>🚀 關閉彈窗 · 明日繼續保持</span>
+          </button>
+        </div>
+
       </div>
     </div>
 
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script type="module" src="js/app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
