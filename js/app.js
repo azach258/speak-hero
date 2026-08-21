@@ -1332,10 +1332,10 @@ class SpeakHeroApp {
     const modal = document.getElementById('daily-reward-modal');
     if (!modal) return;
 
-    // Format display date (e.g. 2026.08.19)
+    // Format display date (e.g. 2026.08.21)
     const todayStr = this.todayKey.replace(/-/g, '.');
 
-    // Dynamic Binding for Japanese Journal Poster
+    // Dynamic Binding for Option 2 Swiss Luxury Editorial Certificate
     const posterStreakNum = document.getElementById('poster-streak-num');
     const posterCertDate = document.getElementById('poster-cert-date');
     const posterCertId = document.getElementById('poster-cert-id');
@@ -1343,14 +1343,15 @@ class SpeakHeroApp {
     const posterTask3Highlight = document.getElementById('poster-task3-highlight');
     const posterSoulQuote = document.getElementById('poster-soul-quote');
 
-    if (posterStreakNum) posterStreakNum.textContent = streakDays;
+    const formattedStreak = streakDays < 10 ? `0${streakDays}` : `${streakDays}`;
+    if (posterStreakNum) posterStreakNum.textContent = formattedStreak;
     if (posterCertDate) posterCertDate.textContent = todayStr;
     if (posterCertId) posterCertId.textContent = `${this.todayKey.replace(/-/g, '')}`;
 
     // Stage 2 Highlight
     const t2Growth = this.todayState.task2Score?.growthPercent || '+32%';
     if (posterTask2Highlight) {
-      posterTask2Highlight.textContent = `力量感提升 ${t2Growth}，重音與停頓頓挫分明、富有層次`;
+      posterTask2Highlight.textContent = `力量感提升 ${t2Growth} · 重音分明`;
     }
 
     // Stage 3 Highlight
@@ -1358,11 +1359,11 @@ class SpeakHeroApp {
     const t3Min = Math.floor(t3Dur / 60);
     const t3Sec = t3Dur % 60;
     if (posterTask3Highlight) {
-      posterTask3Highlight.textContent = `順暢心流 ${t3Min} 分 ${t3Sec} 秒，克服恐懼、聲音自信堅定`;
+      posterTask3Highlight.textContent = `順暢講滿 ${t3Min} 分 ${t3Sec} 秒 · 克服恐懼`;
     }
 
     if (posterSoulQuote) {
-      posterSoulQuote.innerHTML = `每日進步，對自己負責；<br>刻劃更美好的自己，活出自己夢想的樣子！`;
+      posterSoulQuote.innerHTML = `“每日進步，對自己負責；<br>刻劃更美好的自己，活出自己夢想的樣子！”`;
     }
 
     modal.classList.add('active');
@@ -1390,12 +1391,12 @@ class SpeakHeroApp {
         });
       }
 
-      // 2. 以 3 倍高解析度 (scale: 3) 渲染海報
+      // 2. 以 3 倍高解析度 (scale: 3) 渲染黑曜黑金高定海報
       const canvas = await html2canvas(posterEl, {
         scale: 3,
         useCORS: true,
         logging: false,
-        backgroundColor: '#FAF7F2'
+        backgroundColor: '#090D16'
       });
 
       const streakDays = this.settings.currentStreak || 1;

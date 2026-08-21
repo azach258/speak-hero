@@ -96,16 +96,6 @@
           <div id="step-pill-2" class="step-pill">2. 雙重朗讀</div>
           <div id="step-pill-3" class="step-pill">3. 耐力心流</div>
         </div>
-
-        <!-- Obsidian & Telegram Sync Actions -->
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:12px;">
-          <button id="sync-obsidian-btn" class="btn-secondary" style="min-height:40px; font-size:12px; padding:0 8px; border-color:rgba(129, 140, 248, 0.4);">
-            <span>🧠 同步至 Obsidian 複盤</span>
-          </button>
-          <button id="send-tg-btn" class="btn-secondary" style="min-height:40px; font-size:12px; padding:0 8px; border-color:rgba(56, 189, 248, 0.4);">
-            <span>📱 推送 TG 手機戰報</span>
-          </button>
-        </div>
       </div>
     </section>
 
@@ -466,92 +456,114 @@
     </div>
 
     <!-- ==========================================
-         DAILY STREAK REWARD MODAL (文青手帳風打卡成果獎狀)
+         Daily Streak Reward Modal: Option 2 Swiss Luxury Editorial Minimalist Certificate
          ========================================== -->
     <div id="daily-reward-modal" class="modal-overlay">
-      <div class="modal-container journal-reward-container">
+      <div class="modal-container luxury-cert-container">
         
-        <div class="modal-header" style="border:none; padding-bottom:4px; justify-content:flex-end;">
-          <button id="close-reward-btn" class="close-btn" style="z-index:10; font-size:24px; color:#786C62;">&times;</button>
+        <div class="modal-header" style="border:none; padding-bottom:0; justify-content:flex-end;">
+          <button id="close-reward-btn" class="close-btn" style="z-index:10; font-size:24px; color:var(--text-muted);">&times;</button>
         </div>
 
-        <div class="journal-poster-wrapper">
-          <!-- 9:16 Japanese Stationery & Journal Award Poster -->
-          <div id="award-poster" class="award-poster">
-            <div class="poster-inner-card">
+        <div class="luxury-poster-wrapper">
+          <!-- 9:16 Swiss Luxury Editorial Award Certificate -->
+          <div id="award-poster" class="luxury-award-card">
+            <div class="luxury-card-inner">
               
-              <!-- Top Brand Header -->
-              <div class="poster-header">
-                <div class="poster-sub-brand">✦ SPEAK HERO · 每日口語修煉 ✦</div>
-                <h1 class="poster-main-title">今日修煉成果證書</h1>
-                <div class="poster-header-line"></div>
-              </div>
-
-              <!-- Hero Badge: 暖陽杏桃漸層底色的「堅持勳章」 -->
-              <div class="poster-hero-badge">
-                <div class="badge-icon-wrap">🌱</div>
-                <div class="badge-streak-title">
-                  連續打卡第 <span id="poster-streak-num" class="badge-num">1</span> 天
+              <!-- Top Flame Icon & Editorial Brand Header -->
+              <div class="luxury-top-header">
+                <div class="luxury-flame-icon">
+                  <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="url(#goldGradient)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 17c1.38 0 2.5-1.12 2.5-2.5 0-1.63-1.67-3.08-2.5-4.5-.83 1.42-2.5 2.87-2.5 4.5z"/>
+                    <path d="M12 2c5.52 0 10 4.48 10 10 0 4.28-2.69 7.93-6.5 9.35"/>
+                    <path d="M2 12C2 6.48 6.48 2 12 2"/>
+                  </svg>
                 </div>
-                <div class="badge-subtitle">✨ 堅持的力量 · 靜待花開 ✨</div>
+                <div class="luxury-brand-sub">DAILY ORATORY MASTERY · SPEAK HERO</div>
+                <div class="luxury-brand-title">每日表達修煉 · 典藏成果證書</div>
               </div>
 
-              <!-- 3-Stage Checklist with Sage Green Checkmarks -->
-              <div class="poster-section-box">
-                <div class="poster-section-title">【 今日三階段修煉全數通關 】</div>
-                <ul class="poster-checklist">
-                  <li class="check-item">
-                    <span class="check-icon">✔</span>
-                    <span class="check-text"><strong>階段一</strong> · 60秒聽音提煉與邏輯重述</span>
-                  </li>
-                  <li class="check-item">
-                    <span class="check-icon">✔</span>
-                    <span class="check-text"><strong>階段二</strong> · 300字雙軌朗讀（重音頓挫）</span>
-                  </li>
-                  <li class="check-item">
-                    <span class="check-icon">✔</span>
-                    <span class="check-text"><strong>階段三</strong> · 3~5分鐘耐力隨心講心流</span>
-                  </li>
-                </ul>
-              </div>
-
-              <!-- AI Highlights -->
-              <div class="poster-section-box highlight-box">
-                <div class="poster-section-title">【 今日 AI 教練進步評析 】</div>
-                <div class="highlight-item">
-                  <span class="highlight-tag">🔥 雙軌朗讀</span>
-                  <span id="poster-task2-highlight" class="highlight-text">力量感提升 +32%，重音與停頓頓挫分明</span>
+              <!-- Huge Architectural Gold Numerals with Laurel Wreath -->
+              <div class="luxury-num-hero-box">
+                <div class="laurel-branch">🌿</div>
+                <div class="luxury-num-wrap">
+                  <div class="luxury-streak-number" id="poster-streak-num">04</div>
+                  <div class="luxury-streak-label">DAYS OF EXCELLENCE</div>
                 </div>
-                <div class="highlight-item">
-                  <span class="highlight-tag">🎙️ 耐力心流</span>
-                  <span id="poster-task3-highlight" class="highlight-text">順暢講滿 3 分鐘，語流自信自然、能量充沛</span>
-                </div>
+                <div class="laurel-branch flip">🌿</div>
               </div>
 
-              <!-- Core Soul Quote: 上下虛線框住大字 -->
-              <div class="poster-soul-quote-box">
-                <div class="quote-symbol">❝</div>
-                <p id="poster-soul-quote" class="quote-text">
-                  每日進步，對自己負責；<br>
-                  刻劃更美好的自己，活出自己夢想的樣子！
-                </p>
-                <div class="quote-author">— SpeakHero 成長箴言 —</div>
-              </div>
-
-              <!-- Bottom Certification Date & Vermilion Red Stamp Seal -->
-              <div class="poster-footer">
-                <div class="footer-left">
-                  <div class="cert-label">修煉認證日</div>
-                  <div id="poster-cert-date" class="cert-date">2026.08.19</div>
-                  <div class="cert-id">認證編號：SH-<span id="poster-cert-id">20260819</span></div>
-                </div>
-
-                <!-- 朱砂紅傾斜方印 -->
-                <div class="vermilion-seal-stamp">
-                  <div class="seal-inner">
-                    <span>修煉</span>
-                    <span>合格</span>
+              <!-- 3 Luxury Glowing Progress Bars -->
+              <div class="luxury-progress-group">
+                <div class="luxury-progress-item">
+                  <div class="luxury-progress-meta">
+                    <span class="step-num">01</span>
+                    <span class="step-title">60s 聽音提煉與邏輯重述</span>
+                    <span class="step-status">100% 達標</span>
                   </div>
+                  <div class="luxury-progress-track">
+                    <div class="luxury-progress-bar"></div>
+                  </div>
+                </div>
+
+                <div class="luxury-progress-item">
+                  <div class="luxury-progress-meta">
+                    <span class="step-num">02</span>
+                    <span class="step-title">300字雙重朗讀（重音頓挫）</span>
+                    <span class="step-status" id="poster-task2-highlight">力量感 +32%</span>
+                  </div>
+                  <div class="luxury-progress-track">
+                    <div class="luxury-progress-bar"></div>
+                  </div>
+                </div>
+
+                <div class="luxury-progress-item">
+                  <div class="luxury-progress-meta">
+                    <span class="step-num">03</span>
+                    <span class="step-title">3~5分鐘耐力隨心講心流</span>
+                    <span class="step-status" id="poster-task3-highlight">順暢心流 3 分鐘</span>
+                  </div>
+                  <div class="luxury-progress-track">
+                    <div class="luxury-progress-bar"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Soul Quote & Gold Wax Seal Row -->
+              <div class="luxury-quote-seal-row">
+                <!-- 3D Gold Wax Seal -->
+                <div class="luxury-wax-seal">
+                  <div class="seal-ring">
+                    <div class="seal-inner-text">
+                      <span class="seal-brand">SPEAK HERO</span>
+                      <span class="seal-star">★ ★ ★</span>
+                      <span class="seal-sub">OFFICIAL</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Quote Box -->
+                <div class="luxury-quote-content">
+                  <p id="poster-soul-quote" class="luxury-quote-text">
+                    “每日進步，對自己負責；<br>刻劃更美好的自己，活出自己夢想的樣子！”
+                  </p>
+                  <div class="luxury-quote-author">— SPEAK HERO 成 長 箴 言 —</div>
+                </div>
+              </div>
+
+              <!-- Luxury Metadata Footer -->
+              <div class="luxury-cert-footer">
+                <div class="meta-col">
+                  <span class="lbl">CERTIFIED DATE</span>
+                  <span id="poster-cert-date" class="val">2026.08.21</span>
+                </div>
+                <div class="meta-col">
+                  <span class="lbl">CERTIFICATE ID</span>
+                  <span class="val">SH-<span id="poster-cert-id">20260821</span></span>
+                </div>
+                <div class="meta-col text-right">
+                  <span class="lbl">TRAINING RESULT</span>
+                  <span class="val gold">合格 PASSED</span>
                 </div>
               </div>
 
@@ -559,15 +571,15 @@
           </div>
         </div>
 
-        <!-- Poster Action Buttons -->
-        <div class="poster-actions-bar" style="margin-top:14px; display:flex; flex-direction:column; gap:8px;">
-          <button id="reward-download-card-btn" class="btn-primary" style="min-height:48px; background:linear-gradient(135deg, #D96B43, #B8533D); color:#FFF; font-size:15px; font-weight:800; border:none; box-shadow:0 4px 15px rgba(184, 83, 61, 0.35);">
-            <span>📸 儲存 / 分享修煉海報 (PNG)</span>
+        <!-- Luxury Action Buttons -->
+        <div class="luxury-actions-bar">
+          <button id="reward-download-card-btn" class="btn-primary luxury-gold-btn">
+            <span>📸 儲存 / 分享典藏海報 (PNG)</span>
           </button>
-          <button id="reward-copy-report-btn" class="btn-secondary" style="min-height:42px; font-size:13px; background:#FAF7F2; border-color:#D6CEC5; color:#5C524A;">
-            <span>📋 一鍵複製今日打卡戰報 (Obsidian)</span>
+          <button id="reward-copy-report-btn" class="btn-secondary luxury-glass-btn">
+            <span>📋 一鍵複製今日打卡戰報 (Markdown)</span>
           </button>
-          <button id="reward-confirm-btn" class="btn-secondary" style="min-height:40px; font-size:12px; color:#8C7E74; border-color:transparent;">
+          <button id="reward-confirm-btn" class="btn-secondary luxury-text-btn">
             <span>🚀 關閉彈窗 · 明日繼續保持</span>
           </button>
         </div>

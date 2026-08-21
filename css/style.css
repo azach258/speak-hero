@@ -1181,123 +1181,340 @@ body {
   color: var(--text-primary);
 }
 
-/* Japanese Journal Style Daily Reward Modal */
-.journal-reward-container {
-  background: #FFFDF9;
-  color: #1F2937;
-  border-radius: var(--radius-lg);
-  padding: 24px 20px;
-  border: 2px solid #E5E7EB;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-  position: relative;
-  max-width: 380px;
-}
-
-.journal-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  border-bottom: 2px solid #F3F4F6;
-  padding-bottom: 12px;
-  margin-bottom: 16px;
-}
-
-.journal-title {
-  font-size: 22px;
-  font-weight: 900;
-  letter-spacing: -0.5px;
-  color: #111827;
-}
-
-.journal-subtitle {
-  font-size: 12px;
-  color: #6B7280;
-  font-family: monospace;
-}
-
-.journal-red-stamp {
-  border: 2px solid #DC2626;
-  color: #DC2626;
-  padding: 4px 8px;
-  font-size: 12px;
-  font-weight: 900;
-  border-radius: 4px;
-  transform: rotate(-8deg);
-  letter-spacing: 1px;
-}
-
-.journal-body {
-  background: #F9FAFB;
-  border-radius: var(--radius-md);
-  padding: 16px;
-  margin-bottom: 16px;
-  border: 1px dashed #D1D5DB;
-}
-
-.journal-stat-row {
-  display: flex;
-  justify-content: space-around;
-  margin-bottom: 12px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #E5E7EB;
-}
-
-.journal-stat-item {
-  text-align: center;
-}
-
-.journal-stat-val {
-  font-size: 24px;
-  font-weight: 900;
-  color: #D97706;
-}
-
-.journal-stat-lbl {
-  font-size: 11px;
-  color: #6B7280;
-  font-weight: 600;
-}
-
-.journal-quote-box {
-  font-style: italic;
-  font-size: 14px;
-  line-height: 1.6;
-  color: #374151;
-  text-align: center;
-  padding: 8px 0;
-}
-
-.journal-actions-row {
-  display: flex;
-  gap: 10px;
-}
-
-.btn-journal-share {
-  flex: 1;
-  min-height: 48px;
-  background: #111827;
-  color: #FFF;
+/* ==========================================
+   Option 2: Swiss Luxury Editorial Award Certificate Design
+   Matte Obsidian + Hairline Champagne Gold + 3D Gold Wax Seal
+   ========================================== */
+.luxury-cert-container {
+  background: transparent;
   border: none;
-  border-radius: var(--radius-md);
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
+  box-shadow: none;
+  padding: 0;
+  max-width: 440px;
+  width: 100%;
+}
+
+.luxury-poster-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.luxury-award-card {
+  width: 100%;
+  background: #090D16;
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  border-radius: var(--radius-lg);
+  padding: 8px;
+  box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.9), 0 0 35px rgba(245, 158, 11, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.luxury-card-inner {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: calc(var(--radius-lg) - 4px);
+  padding: 24px 20px;
+  background: radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.08) 0%, rgba(9, 13, 22, 0.98) 70%);
+  position: relative;
+}
+
+/* Corner Hairlines */
+.luxury-card-inner::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  border-radius: calc(var(--radius-lg) - 8px);
+  pointer-events: none;
+}
+
+.luxury-top-header {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.luxury-flame-icon {
+  margin-bottom: 6px;
+  filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.5));
+}
+
+.luxury-brand-sub {
+  font-size: 11px;
+  letter-spacing: 2px;
+  font-weight: 800;
+  color: var(--accent-gold);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.luxury-brand-title {
+  font-size: 19px;
+  font-weight: 900;
+  letter-spacing: -0.3px;
+  background: linear-gradient(135deg, #FFFFFF 0%, #FDE68A 60%, #F59E0B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Architectural Large Gold Numeral with Laurel Wreath */
+.luxury-num-hero-box {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 16px;
+  margin: 14px 0 20px;
 }
 
-.btn-journal-close {
-  min-height: 48px;
-  padding: 0 16px;
-  background: #E5E7EB;
-  color: #374151;
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: 14px;
+.laurel-branch {
+  font-size: 32px;
+  opacity: 0.85;
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.3));
+}
+
+.laurel-branch.flip {
+  transform: scaleX(-1);
+}
+
+.luxury-num-wrap {
+  text-align: center;
+}
+
+.luxury-streak-number {
+  font-size: 56px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -2px;
+  font-family: -apple-system, BlinkMacSystemFont, "Playfair Display", "Times New Roman", serif;
+  background: linear-gradient(135deg, #FFFDF0 0%, #FDE68A 35%, #F59E0B 75%, #B45309 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 12px rgba(245, 158, 11, 0.35));
+}
+
+.luxury-streak-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #C7D2FE;
+  margin-top: 4px;
+}
+
+/* 3 Glowing Progress Bars */
+.luxury-progress-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.luxury-progress-item {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+}
+
+.luxury-progress-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.luxury-progress-meta .step-num {
+  font-family: monospace;
+  font-weight: 800;
+  color: var(--accent-gold);
+}
+
+.luxury-progress-meta .step-title {
   font-weight: 700;
-  cursor: pointer;
+  color: #E2E8F0;
+  flex: 1;
+  margin-left: 8px;
+}
+
+.luxury-progress-meta .step-status {
+  font-size: 12px;
+  font-weight: 800;
+  color: #34D399;
+}
+
+.luxury-progress-track {
+  width: 100%;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.luxury-progress-bar {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #F59E0B, #10B981);
+  border-radius: var(--radius-full);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+/* Soul Quote & 3D Gold Wax Seal Row */
+.luxury-quote-seal-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px dashed rgba(245, 158, 11, 0.35);
+  border-radius: var(--radius-md);
+  margin-bottom: 18px;
+}
+
+.luxury-wax-seal {
+  width: 66px;
+  height: 66px;
+  min-width: 66px;
+  background: radial-gradient(circle at 35% 30%, #FDE68A 0%, #D97706 60%, #78350F 100%);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.6), inset 0 -3px 6px rgba(0, 0, 0, 0.5);
+  border: 2px solid #FDE68A;
+  transform: rotate(-6deg);
+}
+
+.seal-ring {
+  width: 52px;
+  height: 52px;
+  border: 1px dashed rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.seal-inner-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.1;
+}
+
+.seal-brand {
+  font-size: 7.5px;
+  font-weight: 900;
+  color: #FFF;
+  letter-spacing: 0.5px;
+}
+
+.seal-star {
+  font-size: 6px;
+  color: #FEF08A;
+  margin: 1px 0;
+}
+
+.seal-sub {
+  font-size: 7px;
+  font-weight: 800;
+  color: #FFF;
+  letter-spacing: 1px;
+}
+
+.luxury-quote-content {
+  flex: 1;
+}
+
+.luxury-quote-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #F8FAFC;
+  font-style: italic;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.luxury-quote-author {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--accent-gold);
+  font-weight: 700;
+}
+
+/* Luxury Metadata Footer */
+.luxury-cert-footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 12px;
+}
+
+.meta-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.meta-col.text-right {
+  text-align: right;
+}
+
+.meta-col .lbl {
+  font-size: 9.5px;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.meta-col .val {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-family: monospace;
+}
+
+.meta-col .val.gold {
+  color: #34D399;
+}
+
+/* Luxury Action Buttons Bar */
+.luxury-actions-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.luxury-gold-btn {
+  background: linear-gradient(135deg, #F59E0B, #D97706) !important;
+  color: #000 !important;
+  font-weight: 900 !important;
+  font-size: 16px !important;
+  min-height: 52px !important;
+  border: none !important;
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4) !important;
+}
+
+.luxury-glass-btn {
+  background: rgba(30, 41, 59, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #F8FAFC !important;
+  font-size: 14px !important;
+  min-height: 46px !important;
+}
+
+.luxury-text-btn {
+  background: transparent !important;
+  border: none !important;
+  color: var(--text-muted) !important;
+  font-size: 13px !important;
+  min-height: 38px !important;
 }
 
 /* Confetti Canvas */
