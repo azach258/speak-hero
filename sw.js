@@ -1,9 +1,10 @@
 /**
  * SpeakHero - Service Worker
  * Ensures offline shell caching & smooth standalone PWA launch without 404.
+ * Specially optimized for iOS Safari Range request media streaming.
  */
 
-const CACHE_NAME = 'speakhero-v1.2';
+const CACHE_NAME = 'speakhero-v1.3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -45,9 +46,24 @@ self.addEventListener('fetch', (event) => {
   // Only handle GET requests
   if (event.request.method !== 'GET') return;
   
-  // Exclude Google Gemini API and Telegram API requests from cache
   const url = event.request.url;
-  if (url.includes('googleapis.com') || url.includes('telegram.org')) {
+
+  // 1. Exclude Google Gemini API, Telegram API and backend endpoints
+  if (url.includes('googleapis.com') || url.includes('telegram.org') || url.includes('/api/')) {
+    return;
+  }
+
+  // 2. CRITICAL IOS FIX: Bypass Range requests and audio/video files
+  // iOS Safari native AVPlayer will fail audio playback if Service Worker returns 200 instead of 206 Partial Content.
+  if (
+    url.includes('.mp3') || 
+    url.includes('.mp4') || 
+    url.includes('.webm') || 
+    url.includes('.wav') || 
+    url.includes('.aac') ||
+    url.includes('.m4a') ||
+    event.request.headers.get('range')
+  ) {
     return;
   }
 

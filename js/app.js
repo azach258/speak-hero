@@ -328,11 +328,30 @@ class SpeakHeroApp {
       statusHint.style.color = '#10B981';
     }
 
-    // Try HTML5 Audio playback
-    if (this.t1AudioElem && this.t1AudioElem.src) {
-      this.t1AudioElem.play().catch(err => {
-        console.warn('HTML5 Audio play blocked or offline, using Web Speech / Timer fallback:', err);
-      });
+    // Try HTML5 Audio playback (with explicit load() for iOS Safari)
+    if (this.t1AudioElem) {
+      if (!this.t1AudioElem.src || !this.t1AudioElem.src.includes(this.currentAudio?.audioUrl)) {
+        this.t1AudioElem.src = this.currentAudio?.audioUrl || '';
+      }
+      try {
+        this.t1AudioElem.load();
+        const p = this.t1AudioElem.play();
+        if (p && p.catch) {
+          p.catch(err => {
+            console.warn('[SpeakHero] HTML5 Audio play error on iOS:', err);
+            // Speech synthesis fallback
+            if ('speechSynthesis' in window && this.currentAudio?.transcript) {
+              window.speechSynthesis.cancel();
+              const u = new SpeechSynthesisUtterance(this.currentAudio.transcript);
+              u.lang = 'zh-TW';
+              u.rate = 0.95;
+              window.speechSynthesis.speak(u);
+            }
+          });
+        }
+      } catch (e) {
+        console.warn('[SpeakHero] Audio play exception:', e);
+      }
     }
 
     // Progress and Timer Tracker (Standard 60 seconds)
@@ -439,26 +458,35 @@ class SpeakHeroApp {
     const timerPill = document.getElementById('t1-timer');
     const recIndicator = document.getElementById('t1-rec-indicator');
 
-    if (placeholderEl) placeholderEl.style.display = 'none';
-    if (videoEl) videoEl.style.display = 'block';
-    if (overlayEl) overlayEl.style.display = 'flex';
-
-    try {
-      await this.t1Media.startPreview(true);
-    } catch (err) {
-      console.warn('Camera preview failed:', err);
-    }
-
-    await this.t1Media.startRecording({ minSeconds: 45, maxSeconds: 60, withVideo: true });
-
     if (recordBtn) {
       recordBtn.classList.add('recording');
-      recordBtn.innerHTML = `<span>⏹️ 邏輯重述中 (0s / 60s · 滿 45s 達標)</span>`;
+      recordBtn.innerHTML = `<span>⏳ 正在開啟麥克風/相機...</span>`;
     }
-    if (recIndicator) recIndicator.classList.add('active');
-    if (timerPill) {
-      timerPill.textContent = '0s / 60s';
-      timerPill.style.color = '#FFF';
+
+    try {
+      await this.t1Media.startRecording({ minSeconds: 45, maxSeconds: 60, withVideo: true });
+
+      if (placeholderEl) placeholderEl.style.display = 'none';
+      if (videoEl && this.t1Media.stream?.getVideoTracks().length > 0) {
+        videoEl.style.display = 'block';
+      }
+      if (overlayEl) overlayEl.style.display = 'flex';
+
+      if (recordBtn) {
+        recordBtn.innerHTML = `<span>⏹️ 邏輯重述中 (0s / 60s · 滿 45s 達標)</span>`;
+      }
+      if (recIndicator) recIndicator.classList.add('active');
+      if (timerPill) {
+        timerPill.textContent = '0s / 60s';
+        timerPill.style.color = '#FFF';
+      }
+    } catch (err) {
+      console.error('[Task 1 Recording Error]', err);
+      if (recordBtn) {
+        recordBtn.classList.remove('recording');
+        recordBtn.innerHTML = `<span>🎯 開始 45~60s 邏輯重述錄音</span>`;
+      }
+      alert('⚠️ 麥克風或相機啟動失敗：請確認已在 iOS 設定或彈窗中允許麥克風權限！');
     }
   }
 

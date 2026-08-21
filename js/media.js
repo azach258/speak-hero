@@ -1,9 +1,37 @@
 /**
  * SpeakHero - Camera, Microphone & MediaRecorder Controller
  * Handles WebRTC streams, video previews, audio visualization & recording.
+ * 100% Cross-Platform Compatible with iOS Safari, Chrome, Edge & Android.
  */
 
 import { sound } from './audio-fx.js';
+
+function getBestMimeType(withVideo = true) {
+  if (typeof MediaRecorder === 'undefined') return '';
+  
+  const videoCandidates = [
+    'video/mp4',
+    'video/webm;codecs=vp8,opus',
+    'video/webm',
+    'video/quicktime'
+  ];
+
+  const audioCandidates = [
+    'audio/mp4',
+    'audio/aac',
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/ogg'
+  ];
+
+  const list = withVideo ? videoCandidates : audioCandidates;
+  for (const type of list) {
+    if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(type)) {
+      return type;
+    }
+  }
+  return '';
+}
 
 export class MediaController {
   constructor(videoPreviewElement, audioVisualizerCanvas = null) {
@@ -43,14 +71,16 @@ export class MediaController {
           this.transcript = text;
         };
       } catch (e) {
-        console.warn('SpeechRecognition init error:', e);
+        console.warn('[MediaController] SpeechRecognition init error:', e);
       }
     }
   }
 
-  // Request Camera + Mic stream (user facing camera for mobile)
+  // Request Camera + Mic stream (with graceful fallback to audio-only on mobile)
   async startPreview(withVideo = true) {
     this.stopPreview();
+
+    // 1. First attempt: Full constraints (Video + Audio or Audio only)
     try {
       const constraints = {
         audio: {
@@ -66,21 +96,38 @@ export class MediaController {
       };
 
       this.stream = await navigator.mediaDevices.getUserMedia(constraints);
-      if (this.videoEl && withVideo) {
-        this.videoEl.srcObject = this.stream;
-        this.videoEl.muted = true;
-        this.videoEl.style.transform = this.mirror ? 'scaleX(-1)' : 'scaleX(1)';
-        await this.videoEl.play();
-      }
-
-      if (this.canvasEl) {
-        this.setupAudioVisualizer();
-      }
-      return true;
     } catch (err) {
-      console.error('Failed to get media devices:', err);
-      throw err;
+      console.warn('[MediaController] Full getUserMedia failed, attempting audio-only fallback:', err);
+      // Fallback: If camera is denied or unavailable on iOS, try pure audio
+      try {
+        this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        withVideo = false;
+      } catch (audioErr) {
+        console.error('[MediaController] Microphone permission denied:', audioErr);
+        throw audioErr;
+      }
     }
+
+    // Attach stream to video element if available
+    if (this.videoEl && withVideo && this.stream.getVideoTracks().length > 0) {
+      this.videoEl.srcObject = this.stream;
+      this.videoEl.muted = true;
+      this.videoEl.setAttribute('playsinline', 'true');
+      this.videoEl.setAttribute('webkit-playsinline', 'true');
+      this.videoEl.style.transform = this.mirror ? 'scaleX(-1)' : 'scaleX(1)';
+      try {
+        await this.videoEl.play();
+      } catch (e) {
+        console.warn('[MediaController] videoEl.play() warning:', e);
+      }
+    } else if (this.videoEl) {
+      this.videoEl.style.display = 'none';
+    }
+
+    if (this.canvasEl) {
+      this.setupAudioVisualizer();
+    }
+    return true;
   }
 
   stopPreview() {
@@ -101,41 +148,46 @@ export class MediaController {
     if (!this.stream || !this.canvasEl) return;
     try {
       if (!this.audioCtx) {
-        this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) this.audioCtx = new AudioCtx();
       }
-      if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+      if (this.audioCtx && this.audioCtx.state === 'suspended') {
+        this.audioCtx.resume();
+      }
 
-      const source = this.audioCtx.createMediaStreamSource(this.stream);
-      this.analyser = this.audioCtx.createAnalyser();
-      this.analyser.fftSize = 64;
-      source.connect(this.analyser);
+      if (this.audioCtx) {
+        const source = this.audioCtx.createMediaStreamSource(this.stream);
+        this.analyser = this.audioCtx.createAnalyser();
+        this.analyser.fftSize = 64;
+        source.connect(this.analyser);
 
-      const canvasCtx = this.canvasEl.getContext('2d');
-      const dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+        const canvasCtx = this.canvasEl.getContext('2d');
+        const dataArray = new Uint8Array(this.analyser.frequencyBinCount);
 
-      const draw = () => {
-        if (!this.stream) return;
-        this.animFrameId = requestAnimationFrame(draw);
-        this.analyser.getByteFrequencyData(dataArray);
+        const draw = () => {
+          if (!this.stream) return;
+          this.animFrameId = requestAnimationFrame(draw);
+          this.analyser.getByteFrequencyData(dataArray);
 
-        canvasCtx.clearRect(0, 0, this.canvasEl.width, this.canvasEl.height);
-        const barWidth = (this.canvasEl.width / dataArray.length) * 1.5;
-        let x = 0;
+          canvasCtx.clearRect(0, 0, this.canvasEl.width, this.canvasEl.height);
+          const barWidth = (this.canvasEl.width / dataArray.length) * 1.5;
+          let x = 0;
 
-        for (let i = 0; i < dataArray.length; i++) {
-          const barHeight = (dataArray[i] / 255) * this.canvasEl.height;
-          const gradient = canvasCtx.createLinearGradient(0, this.canvasEl.height, 0, 0);
-          gradient.addColorStop(0, '#10B981');
-          gradient.addColorStop(1, '#F59E0B');
+          for (let i = 0; i < dataArray.length; i++) {
+            const barHeight = (dataArray[i] / 255) * this.canvasEl.height;
+            const gradient = canvasCtx.createLinearGradient(0, this.canvasEl.height, 0, 0);
+            gradient.addColorStop(0, '#10B981');
+            gradient.addColorStop(1, '#F59E0B');
 
-          canvasCtx.fillStyle = gradient;
-          canvasCtx.fillRect(x, this.canvasEl.height - barHeight, barWidth - 1, barHeight);
-          x += barWidth;
-        }
-      };
-      draw();
+            canvasCtx.fillStyle = gradient;
+            canvasCtx.fillRect(x, this.canvasEl.height - barHeight, barWidth - 1, barHeight);
+            x += barWidth;
+          }
+        };
+        draw();
+      }
     } catch (e) {
-      console.warn('Audio Visualizer setup failed:', e);
+      console.warn('[MediaController] Audio Visualizer setup ignored:', e);
     }
   }
 
@@ -146,22 +198,15 @@ export class MediaController {
     }
 
     this.recordedChunks = [];
-    let mimeType = 'video/webm;codecs=vp8,opus';
-    if (!options.withVideo) {
-      mimeType = 'audio/webm;codecs=opus';
-    }
-
-    if (!MediaRecorder.isTypeSupported(mimeType)) {
-      if (MediaRecorder.isTypeSupported('video/mp4')) mimeType = 'video/mp4';
-      else if (MediaRecorder.isTypeSupported('video/webm')) mimeType = 'video/webm';
-      else mimeType = '';
-    }
+    const hasVideoTrack = this.stream && this.stream.getVideoTracks().length > 0;
+    const mimeType = getBestMimeType(options.withVideo && hasVideoTrack);
 
     try {
       this.mediaRecorder = mimeType 
         ? new MediaRecorder(this.stream, { mimeType }) 
         : new MediaRecorder(this.stream);
-    } catch {
+    } catch (e) {
+      console.warn('[MediaController] MediaRecorder with mimeType failed, fallback to default:', e);
       this.mediaRecorder = new MediaRecorder(this.stream);
     }
 
@@ -176,7 +221,7 @@ export class MediaController {
       try {
         this.recognition.start();
       } catch (e) {
-        console.warn('SpeechRecognition start error:', e);
+        console.warn('[MediaController] SpeechRecognition start warning:', e);
       }
     }
 
@@ -210,7 +255,12 @@ export class MediaController {
         resolve(true);
       };
 
-      this.mediaRecorder.start(250); // Collect data chunk every 250ms
+      try {
+        this.mediaRecorder.start(250); // Collect data chunk every 250ms
+      } catch (err) {
+        // Fallback for older Safari that only supports start() with no timeslice
+        this.mediaRecorder.start();
+      }
     });
   }
 
@@ -227,7 +277,7 @@ export class MediaController {
       try {
         this.recognition.stop();
       } catch (e) {
-        console.warn('SpeechRecognition stop error:', e);
+        console.warn('[MediaController] SpeechRecognition stop warning:', e);
       }
     }
 
@@ -235,11 +285,11 @@ export class MediaController {
       this.mediaRecorder.onstop = () => {
         this.isRecording = false;
         const duration = Math.floor((Date.now() - this.recordingStartTime) / 1000);
-        const mimeType = this.mediaRecorder.mimeType || 'video/webm';
+        const mimeType = this.mediaRecorder.mimeType || 'audio/mp4';
         const blob = new Blob(this.recordedChunks, { type: mimeType });
         const url = URL.createObjectURL(blob);
 
-        this.stopPreview(); // Immediately shut down camera and mic stream!
+        this.stopPreview(); // Shut down camera and mic stream
 
         resolve({
           blob,
