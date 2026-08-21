@@ -131,6 +131,15 @@ class SpeakHeroApp {
 
   // Tab Navigation
   setupNavigation() {
+    const brandLogo = document.querySelector('.brand-logo');
+    if (brandLogo) {
+      brandLogo.style.cursor = 'pointer';
+      brandLogo.title = '點擊重新整理頁面';
+      brandLogo.addEventListener('click', () => {
+        window.location.reload();
+      });
+    }
+
     const tabs = document.querySelectorAll('.tab-btn');
     tabs.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -1646,6 +1655,7 @@ class SpeakHeroApp {
     const closeBtn = document.getElementById('close-settings-btn');
     const saveBtn = document.getElementById('save-settings-btn');
     const soundToggle = document.getElementById('setting-sound-toggle');
+    const reloadAppBtn = document.getElementById('reload-app-btn');
     const testCompleteTodayBtn = document.getElementById('test-complete-today-btn');
     const testDay5Btn = document.getElementById('test-day5-btn');
     const resetTodayBtn = document.getElementById('reset-today-btn');
@@ -1673,6 +1683,32 @@ class SpeakHeroApp {
         aiCoach.updateSettings();
         modal.classList.remove('active');
         sound.taskComplete();
+      });
+    }
+
+    // iOS PWA Hard Refresh Button
+    if (reloadAppBtn) {
+      reloadAppBtn.addEventListener('click', async () => {
+        reloadAppBtn.innerHTML = '<span>⏳ 正在更新快取與重新整理...</span>';
+        try {
+          if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (let reg of registrations) {
+              await reg.update();
+            }
+          }
+          if ('caches' in window) {
+            const cacheKeys = await caches.keys();
+            for (let key of cacheKeys) {
+              if (key.startsWith('speakhero-')) {
+                await caches.delete(key);
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('Cache clear error:', e);
+        }
+        window.location.reload();
       });
     }
 
