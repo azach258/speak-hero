@@ -135,8 +135,6 @@ class StorageDB {
   // LocalStorage Helpers for State & Settings
   static getSettings() {
     const defaultSettings = {
-      geminiApiKey: '',
-      geminiModel: 'gemini-flash-latest',
       soundEnabled: true,
       autoVideoMirror: true,
       currentStreak: 1,

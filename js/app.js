@@ -1645,7 +1645,6 @@ class SpeakHeroApp {
     const openBtn = document.getElementById('open-settings-btn');
     const closeBtn = document.getElementById('close-settings-btn');
     const saveBtn = document.getElementById('save-settings-btn');
-    const apiKeyInput = document.getElementById('setting-gemini-key');
     const soundToggle = document.getElementById('setting-sound-toggle');
     const testCompleteTodayBtn = document.getElementById('test-complete-today-btn');
     const testDay5Btn = document.getElementById('test-day5-btn');
@@ -1653,7 +1652,6 @@ class SpeakHeroApp {
 
     if (openBtn) {
       openBtn.addEventListener('click', () => {
-        apiKeyInput.value = this.settings.geminiApiKey || '';
         soundToggle.checked = this.settings.soundEnabled;
         modal.classList.add('active');
       });
@@ -1669,7 +1667,6 @@ class SpeakHeroApp {
 
     if (saveBtn) {
       saveBtn.addEventListener('click', () => {
-        this.settings.geminiApiKey = apiKeyInput.value.trim();
         this.settings.soundEnabled = soundToggle.checked;
         sound.enabled = this.settings.soundEnabled;
         Storage.saveSettings(this.settings);
