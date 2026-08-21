@@ -195,8 +195,65 @@ class SpeakHeroApp {
     const toggleTipsBtn = document.getElementById('t1-toggle-tips-btn');
     const tipsContent = document.getElementById('t1-audio-tips');
     const startChallengeBtn = document.getElementById('t1-start-challenge-btn');
+    const progressBar = document.getElementById('t1-audio-progress-bar');
 
     this.t1Media = new MediaController(videoEl, canvasEl);
+
+    // Bind standard HTML5 Audio events for 100% reliable iOS & Desktop playback
+    if (this.t1AudioElem) {
+      this.t1AudioElem.onplay = () => {
+        this.isT1AudioPlaying = true;
+        const playIcon = document.getElementById('t1-play-icon');
+        const statusHint = document.getElementById('t1-audio-status-hint');
+        if (playIcon) playIcon.textContent = '⏸️';
+        if (statusHint) {
+          statusHint.textContent = '🎧 正在聆聽 60 秒語音精華...';
+          statusHint.style.color = '#10B981';
+        }
+      };
+
+      this.t1AudioElem.onpause = () => {
+        this.isT1AudioPlaying = false;
+        const playIcon = document.getElementById('t1-play-icon');
+        const statusHint = document.getElementById('t1-audio-status-hint');
+        if (playIcon) playIcon.textContent = '▶️';
+        if (statusHint) {
+          statusHint.textContent = '⏸️ 已暫停播放';
+          statusHint.style.color = '#94A3B8';
+        }
+      };
+
+      this.t1AudioElem.ontimeupdate = () => {
+        const cur = Math.floor(this.t1AudioElem.currentTime || 0);
+        const dur = Math.floor(this.t1AudioElem.duration || 60);
+        const min = Math.floor(cur / 60);
+        const sec = cur % 60;
+        const currentTimeEl = document.getElementById('t1-audio-current-time');
+        const progressFill = document.getElementById('t1-audio-progress-fill');
+        if (currentTimeEl) currentTimeEl.textContent = `${min}:${sec < 10 ? '0' : ''}${sec}`;
+        if (progressFill) {
+          const pct = dur > 0 ? Math.min(100, (cur / dur) * 100) : 0;
+          progressFill.style.width = `${pct}%`;
+        }
+      };
+
+      this.t1AudioElem.onended = () => {
+        this.isT1AudioPlaying = false;
+        sound.taskComplete();
+        const statusHint = document.getElementById('t1-audio-status-hint');
+        if (statusHint) {
+          statusHint.textContent = '✅ 60 秒語音聆聽完畢！準備思考';
+          statusHint.style.color = '#10B981';
+        }
+        setTimeout(() => {
+          this.startTask1ThinkingCountdown();
+        }, 500);
+      };
+
+      this.t1AudioElem.onerror = (e) => {
+        console.warn('[SpeakHero] HTML5 Audio error event, audio element fallback:', e);
+      };
+    }
 
     // Media Controller Callbacks (For 45~60s Restatement Recording)
     this.t1Media.onTick = (elapsed, remaining, progress, thresholdReached) => {
@@ -234,6 +291,16 @@ class SpeakHeroApp {
       });
     }
 
+    // Seekable progress bar
+    if (progressBar) {
+      progressBar.addEventListener('click', (e) => {
+        if (!this.t1AudioElem || !this.t1AudioElem.duration) return;
+        const rect = progressBar.getBoundingClientRect();
+        const clickPos = (e.clientX - rect.left) / rect.width;
+        this.t1AudioElem.currentTime = clickPos * this.t1AudioElem.duration;
+      });
+    }
+
     if (switchAudioBtn) {
       switchAudioBtn.addEventListener('click', () => {
         this.stopTask1Audio();
@@ -254,13 +321,19 @@ class SpeakHeroApp {
     }
 
     if (startChallengeBtn) {
-      startChallengeBtn.addEventListener('click', () => {
+      startChallengeBtn.addEventListener('click', async () => {
         this.stopTask1Audio();
+        // iOS Gesture Unlock: Pre-warm microphone permission during click gesture!
+        try {
+          await this.t1Media.startPreview(true);
+        } catch (e) {
+          console.warn('[SpeakHero] Mic pre-warm:', e);
+        }
         this.startTask1ThinkingCountdown();
       });
     }
 
-    // 2. Restatement Recording Button
+    // 2. Restatement Recording Button (Direct manual trigger)
     if (recordBtn) {
       recordBtn.addEventListener('click', async () => {
         if (!this.t1Media.isRecording) {
@@ -312,105 +385,56 @@ class SpeakHeroApp {
 
     if (this.t1AudioElem) {
       this.t1AudioElem.src = this.currentAudio.audioUrl || '';
+      try {
+        this.t1AudioElem.load();
+      } catch (e) {
+        console.warn('Audio load warning:', e);
+      }
     }
   }
 
   playTask1Audio() {
-    const playIcon = document.getElementById('t1-play-icon');
-    const statusHint = document.getElementById('t1-audio-status-hint');
-    const progressFill = document.getElementById('t1-audio-progress-fill');
-    const currentTimeEl = document.getElementById('t1-audio-current-time');
-
-    this.isT1AudioPlaying = true;
-    if (playIcon) playIcon.textContent = '⏸️';
-    if (statusHint) {
-      statusHint.textContent = '🎧 正在聆聽 60 秒語音精華...';
-      statusHint.style.color = '#10B981';
-    }
-
-    // Try HTML5 Audio playback (with explicit load() for iOS Safari)
     if (this.t1AudioElem) {
-      if (!this.t1AudioElem.src || !this.t1AudioElem.src.includes(this.currentAudio?.audioUrl)) {
+      if (!this.t1AudioElem.src || this.t1AudioElem.src === window.location.href) {
         this.t1AudioElem.src = this.currentAudio?.audioUrl || '';
-      }
-      try {
         this.t1AudioElem.load();
-        const p = this.t1AudioElem.play();
-        if (p && p.catch) {
-          p.catch(err => {
-            console.warn('[SpeakHero] HTML5 Audio play error on iOS:', err);
-            // Speech synthesis fallback
-            if ('speechSynthesis' in window && this.currentAudio?.transcript) {
-              window.speechSynthesis.cancel();
-              const u = new SpeechSynthesisUtterance(this.currentAudio.transcript);
-              u.lang = 'zh-TW';
-              u.rate = 0.95;
-              window.speechSynthesis.speak(u);
-            }
-          });
-        }
-      } catch (e) {
-        console.warn('[SpeakHero] Audio play exception:', e);
       }
+
+      this.t1AudioElem.play().catch(err => {
+        console.warn('[SpeakHero] Audio play blocked or format issue on iOS:', err);
+        // Fallback: SpeechSynthesis if audio codec blocked on older iOS
+        if ('speechSynthesis' in window && this.currentAudio?.transcript) {
+          window.speechSynthesis.cancel();
+          const u = new SpeechSynthesisUtterance(this.currentAudio.transcript);
+          u.lang = 'zh-TW';
+          u.rate = 0.95;
+          window.speechSynthesis.speak(u);
+        }
+      });
     }
-
-    // Progress and Timer Tracker (Standard 60 seconds)
-    clearInterval(this.t1AudioTimer);
-    const totalDuration = this.currentAudio?.duration || 60;
-
-    this.t1AudioTimer = setInterval(() => {
-      this.t1AudioElapsed += 0.5;
-      const cur = Math.min(totalDuration, Math.floor(this.t1AudioElapsed));
-      const min = Math.floor(cur / 60);
-      const sec = cur % 60;
-      if (currentTimeEl) currentTimeEl.textContent = `${min}:${sec < 10 ? '0' : ''}${sec}`;
-
-      const pct = Math.min(100, (this.t1AudioElapsed / totalDuration) * 100);
-      if (progressFill) progressFill.style.width = `${pct}%`;
-
-      if (this.t1AudioElapsed >= totalDuration) {
-        clearInterval(this.t1AudioTimer);
-        this.stopTask1Audio();
-        sound.taskComplete();
-        if (statusHint) {
-          statusHint.textContent = '✅ 60 秒語音聆聽完畢！準備思考';
-          statusHint.style.color = '#10B981';
-        }
-        // Auto-trigger 3-Second Thinking Buffer Countdown!
-        setTimeout(() => {
-          this.startTask1ThinkingCountdown();
-        }, 600);
-      }
-    }, 500);
   }
 
   pauseTask1Audio() {
-    const playIcon = document.getElementById('t1-play-icon');
-    const statusHint = document.getElementById('t1-audio-status-hint');
-
-    this.isT1AudioPlaying = false;
-    clearInterval(this.t1AudioTimer);
-    if (playIcon) playIcon.textContent = '▶️';
-    if (statusHint) {
-      statusHint.textContent = '⏸️ 已暫停播放';
-      statusHint.style.color = '#94A3B8';
+    if (this.t1AudioElem) {
+      this.t1AudioElem.pause();
     }
-    if (this.t1AudioElem) this.t1AudioElem.pause();
-    if ('speechSynthesis' in window) window.speechSynthesis.pause();
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.pause();
+    }
   }
 
   stopTask1Audio() {
     this.pauseTask1Audio();
-    this.t1AudioElapsed = 0;
-    const playIcon = document.getElementById('t1-play-icon');
-    if (playIcon) playIcon.textContent = '▶️';
     if (this.t1AudioElem) {
-      this.t1AudioElem.pause();
       this.t1AudioElem.currentTime = 0;
     }
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
+    const currentTimeEl = document.getElementById('t1-audio-current-time');
+    const progressFill = document.getElementById('t1-audio-progress-fill');
+    if (currentTimeEl) currentTimeEl.textContent = '0:00';
+    if (progressFill) progressFill.style.width = '0%';
   }
 
   // 3-Second Thinking Buffer Countdown
@@ -443,7 +467,7 @@ class SpeakHeroApp {
         sound.countdownBeep(true);
         thinkingBox.style.display = 'none';
         
-        // Auto start 45~60s Restatement Recording
+        // Start 45~60s Restatement Recording
         await this.startTask1Recording();
       }
     }, 1000);
@@ -460,7 +484,7 @@ class SpeakHeroApp {
 
     if (recordBtn) {
       recordBtn.classList.add('recording');
-      recordBtn.innerHTML = `<span>⏳ 正在開啟麥克風/相機...</span>`;
+      recordBtn.innerHTML = `<span>⏳ 正在開啟麥克風...</span>`;
     }
 
     try {
@@ -486,7 +510,7 @@ class SpeakHeroApp {
         recordBtn.classList.remove('recording');
         recordBtn.innerHTML = `<span>🎯 開始 45~60s 邏輯重述錄音</span>`;
       }
-      alert('⚠️ 麥克風或相機啟動失敗：請確認已在 iOS 設定或彈窗中允許麥克風權限！');
+      alert('⚠️ 麥克風或相機啟動失敗：請點擊允許麥克風權限！');
     }
   }
 
@@ -570,8 +594,8 @@ class SpeakHeroApp {
       this.todayState.task1Score = report;
       Storage.saveTodayState(this.todayKey, this.todayState);
 
-      // Render single-screen result card with "Next Step: Task 2" CTA
-      this.renderAIFeedback(feedbackBox, report, '60秒聽音+45~60秒邏輯重述', 'task2', () => this.resetTask1Studio());
+      // Render single-screen result card with "Next Step: Task 2" CTA and Student Recording Playback
+      this.renderAIFeedback(feedbackBox, report, '60秒聽音+45~60秒邏輯重述', 'task2', () => this.resetTask1Studio(), result?.url);
       sound.taskComplete();
       this.updateDailyProgress();
     }
@@ -1043,7 +1067,7 @@ class SpeakHeroApp {
       this.todayState.task3Score = report;
       Storage.saveTodayState(this.todayKey, this.todayState);
 
-      this.renderAIFeedback(feedbackBox, report, '3~5分鐘耐力自由表達', 'complete', () => this.resetTask3Studio());
+      this.renderAIFeedback(feedbackBox, report, '3~5分鐘耐力自由表達', 'complete', () => this.resetTask3Studio(), result?.url);
       sound.taskComplete();
       this.updateDailyProgress();
     }
@@ -1421,37 +1445,46 @@ class SpeakHeroApp {
     }
   }
 
-  // Render AI feedback cards with Next-Step & Retry action buttons
-  renderAIFeedback(container, report, title, nextStep = null, onRetry = null) {
+  // Render AI feedback cards with Next-Step, Retry and Student Recording Playback
+  renderAIFeedback(container, report, title, nextStep = null, onRetry = null, userRecordingUrl = null) {
     if (!container || !report) return;
     container.style.display = 'block';
 
     let nextBtnHtml = '';
     if (nextStep === 'task2') {
       nextBtnHtml = `
-        <button id="fb-next-step-btn" class="btn-primary btn-success" style="width:100%; min-height:48px; font-size:15px;">
+        <button id="fb-next-step-btn" class="btn-primary btn-success" style="width:100%; min-height:52px; font-size:16px;">
           <span>👉 完成第 1 關！進入第 2 關：300字雙重朗讀</span>
         </button>
       `;
     } else if (nextStep === 'complete') {
       nextBtnHtml = `
-        <button id="fb-next-step-btn" class="btn-primary btn-success" style="width:100%; min-height:48px; font-size:15px;">
+        <button id="fb-next-step-btn" class="btn-primary btn-success" style="width:100%; min-height:52px; font-size:16px;">
           <span>🎉 完成第 3 關！今日修煉全數通關 (查看戰報)</span>
         </button>
       `;
     }
 
     const retryBtnHtml = onRetry ? `
-      <button id="fb-retry-btn" class="btn-secondary" style="width:100%; font-size:12px; margin-top:6px;">
+      <button id="fb-retry-btn" class="btn-secondary" style="width:100%; font-size:14px; margin-top:8px;">
         <span>🔄 重新錄製本任務</span>
       </button>
     ` : '';
 
+    const userRecordingHtml = userRecordingUrl ? `
+      <div class="user-recording-playback-box" style="background:rgba(30, 41, 59, 0.75); border:1px solid rgba(56, 189, 248, 0.35); border-radius:10px; padding:14px 16px; margin: 12px 0 16px;">
+        <div style="font-size:14px; font-weight:800; color:#38BDF8; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+          <span>🎧 聆聽剛才我的錄音回放：</span>
+        </div>
+        <audio controls playsinline webkit-playsinline src="${userRecordingUrl}" style="width:100%; height:40px; border-radius:6px;"></audio>
+      </div>
+    ` : '';
+
     const transcriptHtml = report.userTranscription ? `
-      <div style="background:rgba(255,255,255,0.04); border-left:3px solid var(--accent-gold); padding:8px 12px; margin: 10px 0 12px; border-radius:4px; font-size:12px; color:#E2E8F0; line-height:1.5;">
-        <div style="color:#F59E0B; font-weight:800; margin-bottom:2px;">🎙️ AI 聽到的表達原話：</div>
+      <div style="background:rgba(255,255,255,0.04); border-left:4px solid var(--accent-gold); padding:10px 14px; margin: 12px 0 14px; border-radius:6px; font-size:14px; color:#E2E8F0; line-height:1.6;">
+        <div style="color:#F59E0B; font-weight:800; margin-bottom:4px; font-size:14px;">🎙️ AI 聽到的表達原話：</div>
         <em>「${report.userTranscription}」</em>
-        ${report.mainTopic ? `<div style="font-size:11px; color:#94A3B8; margin-top:4px;">📌 辨識主題：<span style="color:#FFF; font-weight:bold;">${report.mainTopic}</span></div>` : ''}
+        ${report.mainTopic ? `<div style="font-size:13px; color:#94A3B8; margin-top:6px;">📌 辨識主題：<span style="color:#FFF; font-weight:bold;">${report.mainTopic}</span></div>` : ''}
       </div>
     ` : '';
 
@@ -1459,12 +1492,13 @@ class SpeakHeroApp {
       <div class="ai-report-card">
         <div class="report-header">
           <div class="report-title">
-            <span>🤖 AI 教練診斷報告</span>
-            <span style="font-size:11px; color:#94A3B8; font-weight:normal;">(${title})</span>
+            <span style="font-size:17px; font-weight:800;">🤖 AI 教練診斷報告</span>
+            <span style="font-size:13px; color:#94A3B8; font-weight:normal;">(${title})</span>
           </div>
           <div class="score-badge">${report.overallScore || 90} 分</div>
         </div>
 
+        ${userRecordingHtml}
         ${transcriptHtml}
 
         <div class="metrics-radar-grid">
