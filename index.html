@@ -37,6 +37,22 @@
       </div>
     </header>
 
+    <!-- Protocol Warning Banner for file:// -->
+    <div id="file-protocol-warning" style="display:none; background: linear-gradient(135deg, #EF4444, #DC2626); color: #fff; padding: 12px 16px; font-size: 13px; line-height: 1.5; border-bottom: 2px solid #FCA5A5; z-index: 999;">
+      <strong>⚠️ 偵測到您直接以本機檔案 (file://) 開啟：</strong><br>
+      現代瀏覽器基於安全策略阻擋了 JS 模組載入，導致按鈕無法點擊。<br>
+      👉 <strong>請改用以下方式開啟：</strong><br>
+      1. 雙擊專案目錄下的 <code>start_app.bat</code> 自動秒開。<br>
+      2. 或開啟終端機執行 <code>python server.py</code> 訪問 <a href="http://localhost:8099" style="color:#FEF08A; font-weight:bold; text-decoration:underline;">http://localhost:8099</a><br>
+      3. 或直接在手機/電腦造訪 <a href="https://azach258.github.io/speak-hero/" target="_blank" style="color:#FEF08A; font-weight:bold; text-decoration:underline;">GitHub 線上版</a>
+    </div>
+    <script>
+      if (window.location.protocol === 'file:') {
+        var w = document.getElementById('file-protocol-warning');
+        if (w) w.style.display = 'block';
+      }
+    </script>
+
     <!-- Streak & 15-Minute Daily Tracker -->
     <section class="streak-dashboard">
       <div class="streak-card-row">
