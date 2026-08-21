@@ -4,7 +4,7 @@
  * Specially optimized for iOS Safari Range request media streaming.
  */
 
-const CACHE_NAME = 'speakhero-v1.4';
+const CACHE_NAME = 'speakhero-v1.5';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

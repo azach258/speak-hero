@@ -81,11 +81,11 @@ body {
 
 /* Header & Top Bar (Optimized with iOS Notch / Dynamic Island Safe Area) */
 .top-header {
-  padding-top: max(18px, env(safe-area-inset-top, 24px) + 8px);
+  padding-top: max(64px, calc(env(safe-area-inset-top, 0px) + 16px));
   padding-bottom: 16px;
   padding-left: max(20px, env(safe-area-inset-left, 0px));
   padding-right: max(20px, env(safe-area-inset-right, 0px));
-  background: rgba(15, 23, 42, 0.94);
+  background: rgba(15, 23, 42, 0.96);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   position: sticky;
@@ -97,10 +97,17 @@ body {
   align-items: center;
 }
 
+@media (min-width: 768px) {
+  .top-header {
+    padding-top: 18px;
+  }
+}
+
 .brand-area {
   display: flex;
   align-items: center;
   gap: 12px;
+  cursor: pointer;
 }
 
 .brand-logo {
@@ -125,26 +132,33 @@ body {
   margin-top: 2px;
 }
 
-.settings-btn {
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.settings-btn, .icon-btn {
   background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-gold);
   color: var(--text-primary);
-  width: 46px;
-  height: 46px;
-  min-width: 46px;
-  min-height: 46px;
+  width: 50px;
+  height: 50px;
+  min-width: 50px;
+  min-height: 50px;
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 22px;
+  font-size: 24px;
   transition: all 0.2s ease;
   padding: 0;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
 }
 
-.settings-btn:active {
+.settings-btn:active, .icon-btn:active {
   transform: scale(0.92);
   background: var(--bg-card-hover);
   border-color: var(--accent-gold);
